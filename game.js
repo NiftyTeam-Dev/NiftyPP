@@ -180,20 +180,6 @@ function resetGameState() {
     lives = characterLives[selectedCharacter];
     score = 0;
 
-// Reset game state for a new game
-function resetGameState() {
-    currentLevel = gameData.gameState.currentLevel;
-    lives = characterLives[selectedCharacter];
-    score = 0;
-    
-    // Generate level from level data
-    generateLevel();
-    
-    // Update UI
-    updateLevelDisplay();
-    updateLivesDisplay();
-    updateScoreDisplay();
-}
 
 // Generate level based on current level
 function generateLevel() {
