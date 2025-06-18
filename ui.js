@@ -56,7 +56,6 @@ function initSettings() {
     });
 }
 
-
 function updateLevelProgressUI() {
     const progressBar = document.getElementById('level-progress');
     if (!progressBar) return;
@@ -454,3 +453,4 @@ if (!window.gameData) {
         }
     };
 }
+
