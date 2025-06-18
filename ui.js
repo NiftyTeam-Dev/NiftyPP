@@ -435,22 +435,24 @@ window.showScreen = showScreen;
 window.showNotification = showNotification;
 window.updateCharacterSelectionUI = updateCharacterSelectionUI;
 
-// Проверка инициализации gameData
+// Проверка инициализации gameData с сохранением существующих данных
 if (!window.gameData) {
-    window.gameData = {
-        users: [],
-        settings: {
-            musicEnabled: true,
-            soundEnabled: true,
-            musicVolume: 0.7,
-            soundVolume: 0.7
-        },
-        gameState: {
-            currentLevel: 1,
-            unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
-            levelScores: Array(50).fill(0),
-            levelCompletion: Array(50).fill(false)
-        }
-    };
+    window.gameData = {};
 }
+
+// Инициализация отсутствующих структур с сохранением существующих данных
+window.gameData.users = window.gameData.users || [];
+window.gameData.settings = window.gameData.settings || {
+    musicEnabled: true,
+    soundEnabled: true,
+    musicVolume: 0.7,
+    soundVolume: 0.7
+};
+
+window.gameData.gameState = window.gameData.gameState || {
+    currentLevel: 1,
+    unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
+    levelScores: Array(50).fill(0),
+    levelCompletion: Array(50).fill(false)
+};
 
