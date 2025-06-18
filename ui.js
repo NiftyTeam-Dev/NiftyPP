@@ -21,23 +21,19 @@ let gameData = {
         characterSpeeds: [5, 6, 7],
         characterLives: [3, 4, 4],
         coinValue: 10,
-        // Новые поля для системы уровней
         currentLevel: 1,
-        unlockedLevels: Array(50).fill(false).map((_, i) => i < 5), // Первые 5 уровней открыты
+        unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
         levelScores: Array(50).fill(0),
         levelCompletion: Array(50).fill(false)
     }
 };
 
-
-//Инициализация getSettings
 function initSettings() {
     document.getElementById('music-toggle').checked = getSetting('musicEnabled');
     document.getElementById('sound-toggle').checked = getSetting('soundEnabled');
     document.getElementById('music-volume').value = getSetting('musicVolume');
     document.getElementById('sound-volume').value = getSetting('soundVolume');
     
-    // Обработчики для элементов настроек
     document.getElementById('music-toggle').addEventListener('change', (e) => {
         gameData.settings.musicEnabled = e.target.checked;
         saveGameData();
@@ -58,17 +54,7 @@ function initSettings() {
 
 function updateLevelProgressUI() {
     const progressBar = document.getElementById('level-progress');
-    if (!progressBar) return;
-
-    // Инициализация при первом запуске
-    if (!gameData.gameState) {
-        gameData.gameState = {
-            currentLevel: 1,
-            unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
-            levelScores: Array(50).fill(0),
-            levelCompletion: Array(50).fill(false)
-        };
-    }
+    if (!progressBar || !gameData.gameState) return;
 
     const completion = gameData.gameState.levelCompletion || [];
     const unlocked = gameData.gameState.unlockedLevels || [];
@@ -84,7 +70,6 @@ function updateLevelProgressUI() {
     `;
 }
 
-// Initialize UI
 function initUI() {
     if (!window.gameData) {
         window.gameData = {
@@ -112,7 +97,6 @@ function initUI() {
     setInterval(updateCountdown, 1000);
 }
 
-// Проверка пользователя Telegram (обновлено для уровней)
 function checkTelegramUser() {
     const tgUser = {
         username: '@testuser' + Math.floor(Math.random() * 1000),
@@ -133,7 +117,6 @@ function checkTelegramUser() {
     const existingUser = gameData.users.find(u => u.telegramUsername === tgUser.username);
     if (existingUser) {
         currentUser = existingUser;
-        // Миграция для старых пользователей
         if (!currentUser.maxLevel) {
             currentUser.maxLevel = 1;
             currentUser.levelProgress = Array(50).fill(false).map((_, i) => i < 1);
@@ -143,30 +126,25 @@ function checkTelegramUser() {
     }
 }
 
-// Настройка кнопок (добавлены новые обработчики)
 function setupButtonListeners() {
-    // Существующие кнопки...
-    
-    // Новые кнопки для системы уровней
-	document.getElementById('start-game').addEventListener('click', () => {
-    if (typeof startGame === 'function') {
-        if (gameData.gameState.gameActive) {
-            startGame();
+    document.getElementById('start-game').addEventListener('click', () => {
+        if (typeof startGame === 'function') {
+            if (gameData.gameState.gameActive) {
+                startGame();
+            } else {
+                showLevelSelectOrStart();
+            }
         } else {
-            showLevelSelectOrStart();
+            console.error('startGame function not found');
+            showNotification('Game initialization error');
         }
-    } else {
-        console.error('startGame function not found');
-        showNotification('Game initialization error');
-    }
-});
+    });
     
     document.getElementById('level-select').addEventListener('click', () => {
         showScreen('level-select-menu');
         updateLevelSelectionUI();
     });
     
-    // Новые обработчики для кнопок "Назад"
     document.getElementById('back-to-main-from-levels').addEventListener('click', () => showScreen('main-menu'));
     document.getElementById('back-to-main').addEventListener('click', () => showScreen('main-menu'));
     document.getElementById('back-to-main2').addEventListener('click', () => showScreen('main-menu'));
@@ -177,44 +155,38 @@ function setupButtonListeners() {
     document.getElementById('back-to-admin-main').addEventListener('click', () => showScreen('main-menu'));
     document.getElementById('back-to-game-menu').addEventListener('click', () => showScreen('main-menu'));
 
-    // Обработчик для кнопки админа
     document.getElementById('admin-login').addEventListener('click', () => {
         showScreen('admin-login-menu');
     });
-	
-	// Подтверждение кнопки входа в интерфейс администратора
-	document.getElementById('admin-login-submit').addEventListener('click', () => {
-    const username = document.getElementById('admin-username').value;
-    const password = document.getElementById('admin-password').value;
     
-    // Простая проверка (в реальном приложении нужно использовать безопасную аутентификацию)
-    if (username === 'admin' && password === 'admin123') {
-        showScreen('admin-panel');
-    } else {
-        showNotification('Invalid admin credentials');
-    }
-});
+    document.getElementById('admin-login-submit').addEventListener('click', () => {
+        const username = document.getElementById('admin-username').value;
+        const password = document.getElementById('admin-password').value;
+        
+        if (username === 'admin' && password === 'admin123') {
+            showScreen('admin-panel');
+        } else {
+            showNotification('Invalid admin credentials');
+        }
+    });
 
-    // Закрытие уведомления
     document.getElementById('close-notification').addEventListener('click', () => {
         document.getElementById('notification').style.display = 'none';
     });
     
-    // Другие существующие обработчики...
-	document.getElementById('characters').addEventListener('click', showCharacterSelection);
-	document.getElementById('stats').addEventListener('click', () => {
-    showScreen('stats-menu');
-    updateStatsUI();
-});
-	document.getElementById('settings').addEventListener('click', () => showScreen('settings-menu'));
-	document.getElementById('feedback').addEventListener('click', () => showScreen('feedback-menu'));
-	document.getElementById('rules').addEventListener('click', () => showScreen('rules-menu'));
-	document.getElementById('invite').addEventListener('click', () => {
-    showNotification('Share this link with friends: ' + window.location.href);
-});
+    document.getElementById('characters').addEventListener('click', showCharacterSelection);
+    document.getElementById('stats').addEventListener('click', () => {
+        showScreen('stats-menu');
+        updateStatsUI();
+    });
+    document.getElementById('settings').addEventListener('click', () => showScreen('settings-menu'));
+    document.getElementById('feedback').addEventListener('click', () => showScreen('feedback-menu'));
+    document.getElementById('rules').addEventListener('click', () => showScreen('rules-menu'));
+    document.getElementById('invite').addEventListener('click', () => {
+        showNotification('Share this link with friends: ' + window.location.href);
+    });
 }
 
-// Показывает выбор уровня или сразу начинает игру
 function showLevelSelectOrStart() {
     if (gameData.gameState.unlockedLevels.filter(Boolean).length > 1) {
         showScreen('level-select-menu');
@@ -224,10 +196,9 @@ function showLevelSelectOrStart() {
     }
 }
 
-// Обновляет UI выбора уровня
 function updateLevelSelectionUI() {
     const container = document.getElementById('level-select-container');
-    if (!container) return;
+    if (!container || !gameData.gameState) return;
     
     container.innerHTML = '';
     
@@ -265,31 +236,13 @@ function updateLevelSelectionUI() {
     }
 }
 
-// Обновляет прогресс уровней на главном экране
-function updateLevelProgressUI() {
-    const progressBar = document.getElementById('level-progress');
-    if (!progressBar) return;
-    
-    const completed = gameData.gameState.levelCompletion.filter(Boolean).length;
-    const total = gameData.gameState.unlockedLevels.filter(Boolean).length;
-    
-    progressBar.innerHTML = `
-        <div class="progress-label">Progress: ${completed}/${total} levels</div>
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: ${(completed/total)*100}%"></div>
-        </div>
-    `;
-}
-
-// Обновленная функция сохранения данных игрока
 function savePlayerData() {
     if (currentUser) {
-        currentUser.score = totalScore || 0;  // Добавлена защита от undefined
-        currentUser.unlockedCharacters = [...unlockedCharacters];
+        currentUser.score = totalScore || 0;
+        currentUser.unlockedCharacters = [...(unlockedCharacters || [true, false, false])];
         currentUser.lastPlayed = new Date();
-        currentUser.maxLevel = Math.max(currentUser.maxLevel, gameData.gameState.currentLevel);
+        currentUser.maxLevel = Math.max(currentUser.maxLevel || 1, gameData.gameState.currentLevel);
         
-        // Обновляем прогресс уровней
         for (let i = 0; i < gameData.gameState.levelCompletion.length; i++) {
             if (gameData.gameState.levelCompletion[i]) {
                 currentUser.levelProgress[i] = true;
@@ -299,6 +252,8 @@ function savePlayerData() {
         const userIndex = gameData.users.findIndex(u => u.telegramUsername === currentUser.telegramUsername);
         if (userIndex !== -1) {
             gameData.users[userIndex] = currentUser;
+        } else {
+            gameData.users.push(currentUser);
         }
         
         saveGameData();
@@ -306,24 +261,23 @@ function savePlayerData() {
     }
 }
 
-// Показывает экран выбора персонажа (обновлено)
 function showCharacterSelection() {
     showScreen('character-menu');
     updateCharacterSelectionUI();
     
-    // Добавляем информацию о текущем уровне
     const levelInfo = document.createElement('div');
     levelInfo.className = 'level-info';
     levelInfo.textContent = `Current Level: ${gameData.gameState.currentLevel}`;
     document.getElementById('character-menu').prepend(levelInfo);
 }
 
-// Обновляет статистику (добавлена информация об уровнях)
 function updateStatsUI() {
     const tableBody = document.querySelector('#stats-table tbody');
+    if (!tableBody) return;
+    
     tableBody.innerHTML = '';
     
-    const sortedUsers = [...gameData.users].sort((a, b) => b.score - a.score);
+    const sortedUsers = [...(gameData.users || [])].sort((a, b) => (b.score || 0) - (a.score || 0));
     
     sortedUsers.forEach((user, index) => {
         const row = document.createElement('tr');
@@ -332,15 +286,15 @@ function updateStatsUI() {
         rankCell.textContent = index + 1;
         
         const nameCell = document.createElement('td');
-        nameCell.textContent = user.gameNickname;
+        nameCell.textContent = user.gameNickname || 'Unknown';
         
         const scoreCell = document.createElement('td');
-        scoreCell.textContent = user.score;
+        scoreCell.textContent = user.score || 0;
         
         const levelCell = document.createElement('td');
         levelCell.textContent = user.maxLevel || 1;
         
-        if (user.telegramUsername === currentUser.telegramUsername) {
+        if (user.telegramUsername === (currentUser?.telegramUsername || '')) {
             row.style.backgroundColor = '#330';
         }
         
@@ -351,19 +305,19 @@ function updateStatsUI() {
         tableBody.appendChild(row);
     });
     
-    // Обновляем заголовки таблицы
     const tableHead = document.querySelector('#stats-table thead');
-    tableHead.innerHTML = `
-        <tr>
-            <th>Rank</th>
-            <th>Nickname</th>
-            <th>Score</th>
-            <th>Max Level</th>
-        </tr>
-    `;
+    if (tableHead) {
+        tableHead.innerHTML = `
+            <tr>
+                <th>Rank</th>
+                <th>Nickname</th>
+                <th>Score</th>
+                <th>Max Level</th>
+            </tr>
+        `;
+    }
 }
 
-// Новое изменение
 function updateCharacterSelectionUI() {
     const container = document.getElementById('character-select');
     if (!container) return;
@@ -406,7 +360,6 @@ function updateCharacterSelectionUI() {
     });
 }
 
-// Инициализация при загрузке
 window.addEventListener('load', () => {
     initUI();
 });
@@ -420,13 +373,15 @@ function promptForNickname() {
     }
 }
 
-
 function updateCountdown() {
-    if (gameData.gameState.countdownEnd) {
+    if (gameData.gameState?.countdownEnd) {
         const diff = gameData.gameState.countdownEnd - Date.now();
         if (diff > 0) {
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            document.getElementById('global-countdown').textContent = `Time left: ${days} days`;
+            const countdownElement = document.getElementById('global-countdown');
+            if (countdownElement) {
+                countdownElement.textContent = `Time left: ${days} days`;
+            }
         }
     }
 }
@@ -435,12 +390,10 @@ window.showScreen = showScreen;
 window.showNotification = showNotification;
 window.updateCharacterSelectionUI = updateCharacterSelectionUI;
 
-// Проверка инициализации gameData с сохранением существующих данных
 if (!window.gameData) {
     window.gameData = {};
 }
 
-// Инициализация отсутствующих структур с сохранением существующих данных
 window.gameData.users = window.gameData.users || [];
 window.gameData.settings = window.gameData.settings || {
     musicEnabled: true,
@@ -455,4 +408,3 @@ window.gameData.gameState = window.gameData.gameState || {
     levelScores: Array(50).fill(0),
     levelCompletion: Array(50).fill(false)
 };
-
