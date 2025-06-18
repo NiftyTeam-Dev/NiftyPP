@@ -336,9 +336,9 @@ function updateCharacterSelectionUI() {
     container.innerHTML = '';
     
     const characters = [
-        { name: "Pacman", unlockScore: 0, speed: 5, lives: 3 },
-        { name: "Ms. Pacman", unlockScore: 500, speed: 6, lives: 4 },
-        { name: "Baby Pacman", unlockScore: 1500, speed: 7, lives: 4 }
+        { name: "Nifty Panda", unlockScore: 0, speed: 5, lives: 3 },
+        { name: "Nifty Panda 2", unlockScore: 500, speed: 6, lives: 4 },
+        { name: "Nifty Panda 3", unlockScore: 1500, speed: 7, lives: 4 }
     ];
     
     characters.forEach((char, index) => {
