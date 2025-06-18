@@ -1,5 +1,30 @@
 // data.js
-// Data management functions
+// Проверка иницализации gameData
+if (!window.gameData) {
+    window.gameData = {
+        users: [],
+        settings: {
+            musicEnabled: true,
+            soundEnabled: true,
+            musicVolume: 0.7,
+            soundVolume: 0.7
+        },
+        gameState: {
+            currentLevel: 1,
+            unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
+            levelScores: Array(50).fill(0),
+            levelCompletion: Array(50).fill(false)
+        }
+    };
+}
+
+function getSetting(name) {
+    if (!gameData || !gameData.settings) {
+        console.warn('gameData.settings not initialized, returning default');
+        return name === 'musicEnabled' || name === 'soundEnabled' ? true : 0.7;
+    }
+    return gameData.settings[name];
+}
 
 // Save the current game state
 function saveGameState() {
