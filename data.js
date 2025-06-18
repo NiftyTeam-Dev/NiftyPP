@@ -1,5 +1,4 @@
 // data.js
-// Проверка иницализации gameData
 if (!window.gameData) {
     window.gameData = {
         users: [],
@@ -26,39 +25,34 @@ function getSetting(name) {
     return gameData.settings[name];
 }
 
-// Save the current game state
 function saveGameState() {
-    // Archive current game if it's ending
-    if (gameData.gameState.countdownEnd && Date.now() >= gameData.gameState.countdownEnd) {
-        const sortedUsers = [...gameData.users].sort((a, b) => b.score - a.score);
+    if (gameData.gameState?.countdownEnd && Date.now() >= gameData.gameState.countdownEnd) {
+        const sortedUsers = [...(gameData.users || [])].sort((a, b) => (b.score || 0) - (a.score || 0));
         const topPlayers = sortedUsers.slice(0, 10).map(user => ({
-            nickname: user.gameNickname,
-            username: user.telegramUsername,
-            score: user.score,
+            nickname: user.gameNickname || 'Unknown',
+            username: user.telegramUsername || '',
+            score: user.score || 0,
             maxLevel: user.maxLevel || 1
         }));
         
+        gameData.gameState.archives = gameData.gameState.archives || [];
         gameData.gameState.archives.push({
             date: gameData.gameState.countdownEnd,
             topPlayers: topPlayers
         });
         
-        // Reset countdown
         gameData.gameState.countdownEnd = null;
         gameData.gameState.gameActive = false;
     }
     
-    // Save to localStorage
     localStorage.setItem('telegramPacmanData', JSON.stringify(gameData));
 }
 
-// Load the game state
 function loadGameState() {
     const savedData = localStorage.getItem('telegramPacmanData');
     if (savedData) {
         gameData = JSON.parse(savedData);
         
-        // Initialize default values if they don't exist
         if (!gameData.settings) {
             gameData.settings = {
                 musicEnabled: true,
@@ -80,9 +74,8 @@ function loadGameState() {
                 characterSpeeds: [5, 6, 7],
                 characterLives: [3, 4, 4],
                 coinValue: 10,
-                // Новые поля для системы уровней
                 currentLevel: 1,
-                unlockedLevels: Array(50).fill(false).map((_, i) => i < 5), // Первые 5 уровней открыты
+                unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
                 levelScores: Array(50).fill(0),
                 levelCompletion: Array(50).fill(false)
             };
@@ -91,18 +84,12 @@ function loadGameState() {
         if (!gameData.users) {
             gameData.users = [];
         } else {
-            // Миграция для существующих пользователей
             gameData.users.forEach(user => {
                 user.maxLevel = user.maxLevel || 1;
                 user.levelProgress = user.levelProgress || Array(50).fill(false).map((_, i) => i < 1);
             });
         }
     }
-}
-
-// Функции для работы с настройками
-function getSetting(name) {
-    return gameData.settings[name];
 }
 
 function saveGameData() {
@@ -114,22 +101,32 @@ function loadGameData() {
     if (savedData) gameData = JSON.parse(savedData);
 }
 
-// Функции для UI
 function showScreen(screenId) {
-    document.querySelectorAll('.menu').forEach(el => el.style.display = 'none');
-    document.getElementById(screenId).style.display = 'flex';
+    const menus = document.querySelectorAll('.menu');
+    if (menus) {
+        menus.forEach(el => el.style.display = 'none');
+    }
+    const screen = document.getElementById(screenId);
+    if (screen) {
+        screen.style.display = 'flex';
+    }
     currentScreen = screenId;
 }
 
 function showNotification(message) {
     const notification = document.getElementById('notification');
-    document.getElementById('notification-text').textContent = message;
-    notification.style.display = 'block';
+    const notificationText = document.getElementById('notification-text');
+    if (notification && notificationText) {
+        notificationText.textContent = message;
+        notification.style.display = 'block';
+    }
 }
 
-document.getElementById('close-notification').addEventListener('click', () => {
-    document.getElementById('notification').style.display = 'none';
+document.getElementById('close-notification')?.addEventListener('click', () => {
+    const notification = document.getElementById('notification');
+    if (notification) {
+        notification.style.display = 'none';
+    }
 });
 
-// Initialize data
 loadGameState();
