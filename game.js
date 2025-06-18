@@ -171,7 +171,6 @@ function handleSwipe() {
 
 // Проверка на существование gameData
 function resetGameState() {
-function resetGameState() {
     if (!window.gameData) {
         window.gameData = {
             users: [],
