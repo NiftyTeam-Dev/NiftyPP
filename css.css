@@ -1,0 +1,26 @@
+.level-indicator {
+    width: 30px;
+    height: 30px;
+    margin: 5px;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.level-indicator.completed {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.level-indicator.unlocked {
+    background-color: #FFC107;
+    color: black;
+}
+
+.level-indicator.locked {
+    background-color: #9E9E9E;
+    color: white;
+    cursor: not-allowed;
+}

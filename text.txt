@@ -1,0 +1,29 @@
+telegram-pacman/
+│
+├── index.html          - Main game file
+├── game.js             - Game logic
+├── ui.js               - User interface handling
+├── data.js             - Data storage and retrieval
+├── sounds/             - Sound effects
+│   ├── bgmusic.mp3
+│   ├── coin.wav
+│   ├── gameover.wav
+│   ├── ghost.wav
+│   ├── lose-life.wav
+│   └── win.wav
+├── images/             - Game assets
+│   ├── characters/
+│   │   ├── char1.png
+│   │   ├── char2.png
+│   │   └── char3.png
+│   ├── enemies/
+│   │   ├── ghost1.png
+│   │   ├── ghost2.png
+│   │   └── ghost3.png
+│   ├── items/
+│   │   └── coin.png
+│   ├── background.png
+│   ├── game-bg.png
+│   └── menu-bg.png
+└── data/               - User data storage
+    └── users.json
