@@ -48,11 +48,15 @@ function initGame() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    loadImages();
     setupEventListeners();
     resetGameState();
     
-    requestAnimationFrame(gameLoop);
+    // Загружаем изображения перед началом игры
+    loadImages().then(() => {
+        requestAnimationFrame(gameLoop);
+    }).catch(error => {
+        console.error('Error loading images:', error);
+    });
 }
 
 function resizeCanvas() {
@@ -63,34 +67,74 @@ function resizeCanvas() {
 }
 
 function loadImages() {
-    images.background = new Image();
-    images.background.src = 'images/menu-bg.png';
-    
-    images.gameBg = new Image();
-    images.gameBg.src = 'images/game-bg.png';
-    
-    for (let i = 0; i < 3; i++) {
-        images.characters[i] = new Image();
-        images.characters[i].src = `images/characters/char${i+1}.png`;
+    return new Promise((resolve, reject) => {
+        let loadedCount = 0;
+        const totalImages = 11; // Общее количество изображений
         
-        images.ghosts[i] = new Image();
-        images.ghosts[i].src = `images/ghosts/ghost${i+1}.png`;
-    }
-    
-    images.coin = new Image();
-    images.coin.src = 'images/items/coin.png';
-    
-    images.powerPellet = new Image();
-    images.powerPellet.src = 'images/items/power-pellet.png';
-    
-    images.walls[WALL_TYPES.SOLID] = new Image();
-    images.walls[WALL_TYPES.SOLID].src = 'images/walls/solid.png';
-    
-    images.walls[WALL_TYPES.BREAKABLE] = new Image();
-    images.walls[WALL_TYPES.BREAKABLE].src = 'images/walls/breakable.png';
-    
-    images.walls[WALL_TYPES.TELEPORT] = new Image();
-    images.walls[WALL_TYPES.TELEPORT].src = 'images/walls/teleport.png';
+        function imageLoaded() {
+            loadedCount++;
+            if (loadedCount === totalImages) {
+                resolve();
+            }
+        }
+        
+        function handleImageError(error) {
+            console.error('Error loading image:', error);
+            reject(error);
+        }
+        
+        // Фон меню
+        images.background = new Image();
+        images.background.onload = imageLoaded;
+        images.background.onerror = handleImageError;
+        images.background.src = 'images/menu-bg.png';
+        
+        // Фон игры
+        images.gameBg = new Image();
+        images.gameBg.onload = imageLoaded;
+        images.gameBg.onerror = handleImageError;
+        images.gameBg.src = 'images/game-bg.png';
+        
+        // Персонажи
+        for (let i = 0; i < 3; i++) {
+            images.characters[i] = new Image();
+            images.characters[i].onload = imageLoaded;
+            images.characters[i].onerror = handleImageError;
+            images.characters[i].src = `images/characters/char${i+1}.png`;
+            
+            images.ghosts[i] = new Image();
+            images.ghosts[i].onload = imageLoaded;
+            images.ghosts[i].onerror = handleImageError;
+            images.ghosts[i].src = `images/ghosts/ghost${i+1}.png`;
+        }
+        
+        // Предметы
+        images.coin = new Image();
+        images.coin.onload = imageLoaded;
+        images.coin.onerror = handleImageError;
+        images.coin.src = 'images/items/coin.png';
+        
+        images.powerPellet = new Image();
+        images.powerPellet.onload = imageLoaded;
+        images.powerPellet.onerror = handleImageError;
+        images.powerPellet.src = 'images/items/power-pellet.png';
+        
+        // Стены
+        images.walls[WALL_TYPES.SOLID] = new Image();
+        images.walls[WALL_TYPES.SOLID].onload = imageLoaded;
+        images.walls[WALL_TYPES.SOLID].onerror = handleImageError;
+        images.walls[WALL_TYPES.SOLID].src = 'images/walls/solid.png';
+        
+        images.walls[WALL_TYPES.BREAKABLE] = new Image();
+        images.walls[WALL_TYPES.BREAKABLE].onload = imageLoaded;
+        images.walls[WALL_TYPES.BREAKABLE].onerror = handleImageError;
+        images.walls[WALL_TYPES.BREAKABLE].src = 'images/walls/breakable.png';
+        
+        images.walls[WALL_TYPES.TELEPORT] = new Image();
+        images.walls[WALL_TYPES.TELEPORT].onload = imageLoaded;
+        images.walls[WALL_TYPES.TELEPORT].onerror = handleImageError;
+        images.walls[WALL_TYPES.TELEPORT].src = 'images/walls/teleport.png';
+    });
 }
 
 function setupEventListeners() {
@@ -230,7 +274,6 @@ function gameLoop(timestamp) {
 }
 
 function update(deltaTime) {
-    // Update game state
     updatePlayer(deltaTime);
     updateGhosts(deltaTime);
     checkCollisions();
@@ -238,7 +281,6 @@ function update(deltaTime) {
 }
 
 function updatePlayer(deltaTime) {
-    // Handle player movement
     if (keys['ArrowUp'] || player.nextMove === 'up') {
         player.dy = -characterSpeeds[selectedCharacter];
         player.dx = 0;
@@ -257,11 +299,9 @@ function updatePlayer(deltaTime) {
         player.nextMove = null;
     }
     
-    // Move player
     const newX = player.x + player.dx * deltaTime / 1000;
     const newY = player.y + player.dy * deltaTime / 1000;
     
-    // Check wall collisions
     if (!isWall(newX, newY)) {
         player.x = newX;
         player.y = newY;
@@ -270,10 +310,8 @@ function updatePlayer(deltaTime) {
         player.dy = 0;
     }
     
-    // Check teleports
     checkTeleports();
     
-    // Check power pellet timeout
     if (player.poweredUp && Date.now() > player.powerEndTime) {
         player.poweredUp = false;
         document.getElementById('power-indicator').style.display = 'none';
@@ -282,13 +320,11 @@ function updatePlayer(deltaTime) {
 
 function updateGhosts(deltaTime) {
     ghosts.forEach(ghost => {
-        // Simple AI for ghosts
         if (Math.random() < 0.01) {
             ghost.dx = Math.random() > 0.5 ? 1 : -1;
             ghost.dy = Math.random() > 0.5 ? 1 : -1;
         }
         
-        // Move ghost
         const newX = ghost.x + ghost.dx * ghost.speed * deltaTime / 1000;
         const newY = ghost.y + ghost.dy * ghost.speed * deltaTime / 1000;
         
@@ -303,14 +339,13 @@ function updateGhosts(deltaTime) {
 }
 
 function checkCollisions() {
-    // Check coin collisions
     for (let i = coins.length - 1; i >= 0; i--) {
         const coin = coins[i];
         if (Math.abs(player.x - coin.x) < 0.5 && Math.abs(player.y - coin.y) < 0.5) {
             if (coin.type === 'power') {
                 score += POWER_PELLET_SCORE;
                 player.poweredUp = true;
-                player.powerEndTime = Date.now() + 10000; // 10 seconds
+                player.powerEndTime = Date.now() + 10000;
                 document.getElementById('power-indicator').style.display = 'block';
                 playSound('power-pellet');
             } else {
@@ -322,27 +357,22 @@ function checkCollisions() {
         }
     }
     
-    // Check ghost collisions
     ghosts.forEach(ghost => {
         if (Math.abs(player.x - ghost.x) < 0.5 && Math.abs(player.y - ghost.y) < 0.5) {
             if (player.poweredUp) {
-                // Eat ghost
                 score += 200;
                 playSound('eat-ghost');
-                // Respawn ghost
                 const spawn = LEVELS[currentLevel - 1].ghostSpawns[ghosts.indexOf(ghost) % LEVELS[currentLevel - 1].ghostSpawns.length];
                 ghost.x = spawn.x;
                 ghost.y = spawn.y;
                 document.getElementById('score-display').textContent = score;
             } else {
-                // Lose life
                 lives--;
                 document.getElementById('lives-display').textContent = lives;
                 playSound('lose-life');
                 if (lives <= 0) {
                     gameOver();
                 } else {
-                    // Reset player position
                     player.x = LEVELS[currentLevel - 1].playerSpawn.x;
                     player.y = LEVELS[currentLevel - 1].playerSpawn.y;
                 }
@@ -363,7 +393,6 @@ function checkTeleports() {
 
 function checkWinCondition() {
     if (coins.length === 0) {
-        // Level completed
         totalScore += score * currentLevel * LEVEL_SCORE_MULTIPLIER;
         gameData.gameState.levelScores[currentLevel - 1] = score;
         gameData.gameState.levelCompletion[currentLevel - 1] = true;
@@ -379,7 +408,6 @@ function checkWinCondition() {
             currentLevel++;
             startGame();
         } else {
-            // Game completed
             gameRunning = false;
             showScreen('main-menu');
             showNotification('Congratulations! You completed all levels!');
@@ -396,41 +424,41 @@ function gameOver() {
 }
 
 function drawGame() {
-    // Draw background
-    if (images.gameBg.complete) {
+    // Рисуем только если изображения загружены
+    if (images.gameBg && images.gameBg.complete) {
         ctx.drawImage(images.gameBg, 0, 0, canvas.width, canvas.height);
     }
     
-    // Draw walls
+    // Рисуем стены
     for (let y = 0; y < walls.length; y++) {
         for (let x = 0; x < walls[y].length; x++) {
-            if (walls[y][x] !== 0 && images.walls[walls[y][x]]?.complete) {
+            if (walls[y][x] !== 0 && images.walls[walls[y][x]] && images.walls[walls[y][x]].complete) {
                 const tileSize = canvas.width / GRID_SIZE;
                 ctx.drawImage(images.walls[walls[y][x]], x * tileSize, y * tileSize, tileSize, tileSize);
             }
         }
     }
     
-    // Draw coins
+    // Рисуем монеты
     coins.forEach(coin => {
         const tileSize = canvas.width / GRID_SIZE;
         const img = coin.type === 'power' ? images.powerPellet : images.coin;
-        if (img.complete) {
+        if (img && img.complete) {
             ctx.drawImage(img, coin.x * tileSize, coin.y * tileSize, tileSize, tileSize);
         }
     });
     
-    // Draw ghosts
+    // Рисуем призраков
     ghosts.forEach(ghost => {
         const tileSize = canvas.width / GRID_SIZE;
-        if (images.ghosts[ghost.type]?.complete) {
+        if (images.ghosts[ghost.type] && images.ghosts[ghost.type].complete) {
             ctx.drawImage(images.ghosts[ghost.type], ghost.x * tileSize, ghost.y * tileSize, tileSize, tileSize);
         }
     });
     
-    // Draw player
+    // Рисуем игрока
     const tileSize = canvas.width / GRID_SIZE;
-    if (images.characters[selectedCharacter]?.complete) {
+    if (images.characters[selectedCharacter] && images.characters[selectedCharacter].complete) {
         ctx.drawImage(images.characters[selectedCharacter], player.x * tileSize, player.y * tileSize, tileSize, tileSize);
     }
 }
