@@ -169,6 +169,17 @@ function handleSwipe() {
     touchEnd = null;
 }
 
+// Проверка на существование gameData
+function resetGameState() {
+    if (!window.gameData) {
+        console.error('gameData is not initialized');
+        return;
+    }
+    
+    currentLevel = gameData.gameState.currentLevel;
+    lives = characterLives[selectedCharacter];
+    score = 0;
+
 // Reset game state for a new game
 function resetGameState() {
     currentLevel = gameData.gameState.currentLevel;
