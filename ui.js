@@ -29,6 +29,34 @@ let gameData = {
     }
 };
 
+
+//Инициализация getSettings
+function initSettings() {
+    document.getElementById('music-toggle').checked = getSetting('musicEnabled');
+    document.getElementById('sound-toggle').checked = getSetting('soundEnabled');
+    document.getElementById('music-volume').value = getSetting('musicVolume');
+    document.getElementById('sound-volume').value = getSetting('soundVolume');
+    
+    // Обработчики для элементов настроек
+    document.getElementById('music-toggle').addEventListener('change', (e) => {
+        gameData.settings.musicEnabled = e.target.checked;
+        saveGameData();
+    });
+    document.getElementById('sound-toggle').addEventListener('change', (e) => {
+        gameData.settings.soundEnabled = e.target.checked;
+        saveGameData();
+    });
+    document.getElementById('music-volume').addEventListener('input', (e) => {
+        gameData.settings.musicVolume = parseFloat(e.target.value);
+        saveGameData();
+    });
+    document.getElementById('sound-volume').addEventListener('input', (e) => {
+        gameData.settings.soundVolume = parseFloat(e.target.value);
+        saveGameData();
+    });
+}
+
+
 function updateLevelProgressUI() {
     const progressBar = document.getElementById('level-progress');
     if (!progressBar) return;
@@ -59,7 +87,7 @@ function updateLevelProgressUI() {
 
 // Initialize UI
 function initUI() {
-	if (!window.gameData) {
+    if (!window.gameData) {
         window.gameData = {
             users: [],
             settings: {
@@ -83,7 +111,7 @@ function initUI() {
     showScreen('main-menu');
     updateCountdown();
     setInterval(updateCountdown, 1000);
-    }
+}
 
 // Проверка пользователя Telegram (обновлено для уровней)
 function checkTelegramUser() {
@@ -393,30 +421,6 @@ function promptForNickname() {
     }
 }
 
-function initSettings() {
-    document.getElementById('music-toggle').checked = getSetting('musicEnabled');
-    document.getElementById('sound-toggle').checked = getSetting('soundEnabled');
-    document.getElementById('music-volume').value = getSetting('musicVolume');
-    document.getElementById('sound-volume').value = getSetting('soundVolume');
-    
-    // Обработчики для элементов настроек
-    document.getElementById('music-toggle').addEventListener('change', (e) => {
-        gameData.settings.musicEnabled = e.target.checked;
-        saveGameData();
-    });
-    document.getElementById('sound-toggle').addEventListener('change', (e) => {
-        gameData.settings.soundEnabled = e.target.checked;
-        saveGameData();
-    });
-    document.getElementById('music-volume').addEventListener('input', (e) => {
-        gameData.settings.musicVolume = parseFloat(e.target.value);
-        saveGameData();
-    });
-    document.getElementById('sound-volume').addEventListener('input', (e) => {
-        gameData.settings.soundVolume = parseFloat(e.target.value);
-        saveGameData();
-    });
-}
 
 function updateCountdown() {
     if (gameData.gameState.countdownEnd) {
