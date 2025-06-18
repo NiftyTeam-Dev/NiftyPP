@@ -15,8 +15,12 @@ function playSound(name) {
     
     const sound = SOUNDS[name];
     if (sound) {
-        const audio = new Audio(`sounds/${sound.file}`);
-        audio.volume = (getSetting('soundVolume') || 0.7) * sound.volume;
-        audio.play().catch(e => console.log('Audio play error:', e));
+        try {
+            const audio = new Audio(`sounds/${sound.file}`);
+            audio.volume = (getSetting('soundVolume') || 0.7) * sound.volume;
+            audio.play().catch(e => console.log('Audio play error:', e));
+        } catch (e) {
+            console.error('Error playing sound:', e);
+        }
     }
 }
