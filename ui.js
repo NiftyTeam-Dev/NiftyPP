@@ -128,16 +128,7 @@ function checkTelegramUser() {
 
 function setupButtonListeners() {
     document.getElementById('start-game').addEventListener('click', () => {
-        if (typeof startGame === 'function') {
-            if (gameData.gameState.gameActive) {
-                startGame();
-            } else {
-                showLevelSelectOrStart();
-            }
-        } else {
-            console.error('startGame function not found');
-            showNotification('Game initialization error');
-        }
+        showLevelSelectOrStart();
     });
     
     document.getElementById('level-select').addEventListener('click', () => {
@@ -153,7 +144,12 @@ function setupButtonListeners() {
     document.getElementById('back-to-main5').addEventListener('click', () => showScreen('main-menu'));
     document.getElementById('back-to-main6').addEventListener('click', () => showScreen('main-menu'));
     document.getElementById('back-to-admin-main').addEventListener('click', () => showScreen('main-menu'));
-    document.getElementById('back-to-game-menu').addEventListener('click', () => showScreen('main-menu'));
+    document.getElementById('back-to-game-menu').addEventListener('click', () => {
+        if (typeof window.gameRunning !== 'undefined') {
+            window.gameRunning = false;
+        }
+        showScreen('main-menu');
+    });
 
     document.getElementById('admin-login').addEventListener('click', () => {
         showScreen('admin-login-menu');
@@ -192,7 +188,12 @@ function showLevelSelectOrStart() {
         showScreen('level-select-menu');
         updateLevelSelectionUI();
     } else {
-        startGame();
+        if (typeof window.startGame === 'function') {
+            window.startGame();
+        } else {
+            console.error('startGame function not loaded yet');
+            showNotification('Game is loading, please try again');
+        }
     }
 }
 
@@ -223,7 +224,17 @@ function updateLevelSelectionUI() {
                 levelBtn.addEventListener('click', () => {
                     gameData.gameState.currentLevel = i+1;
                     saveGameData();
-                    startGame();
+                    if (typeof window.startGame === 'function') {
+                        window.startGame();
+                    }
+                });
+            } else {
+                levelBtn.addEventListener('click', () => {
+                    gameData.gameState.currentLevel = i+1;
+                    saveGameData();
+                    if (typeof window.startGame === 'function') {
+                        window.startGame();
+                    }
                 });
             }
         } else {
@@ -343,8 +354,12 @@ function updateCharacterSelectionUI() {
             `;
             
             charDiv.addEventListener('click', () => {
-                selectedCharacter = index;
-                savePlayerData();
+                if (typeof window.selectedCharacter !== 'undefined') {
+                    window.selectedCharacter = index;
+                }
+                if (typeof window.savePlayerData === 'function') {
+                    window.savePlayerData();
+                }
                 updateCharacterSelectionUI();
             });
         } else {
@@ -359,10 +374,6 @@ function updateCharacterSelectionUI() {
         container.appendChild(charDiv);
     });
 }
-
-window.addEventListener('load', () => {
-    initUI();
-});
 
 function promptForNickname() {
     const nickname = prompt('Enter your game nickname:');
@@ -386,25 +397,4 @@ function updateCountdown() {
     }
 }
 
-window.showScreen = showScreen;
-window.showNotification = showNotification;
-window.updateCharacterSelectionUI = updateCharacterSelectionUI;
-
-if (!window.gameData) {
-    window.gameData = {};
-}
-
-window.gameData.users = window.gameData.users || [];
-window.gameData.settings = window.gameData.settings || {
-    musicEnabled: true,
-    soundEnabled: true,
-    musicVolume: 0.7,
-    soundVolume: 0.7
-};
-
-window.gameData.gameState = window.gameData.gameState || {
-    currentLevel: 1,
-    unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
-    levelScores: Array(50).fill(0),
-    levelCompletion: Array(50).fill(false)
-};
+window.addEventListener('load', initUI);
