@@ -198,6 +198,20 @@ function generateLevel() {
     });
 }
 
+function startGame() {
+    gameRunning = true;
+    resetGameState();
+    generateLevel();
+    
+    document.getElementById('game-ui').style.display = 'block';
+    document.getElementById('level-display').textContent = currentLevel;
+    document.getElementById('lives-display').textContent = lives;
+    document.getElementById('score-display').textContent = score;
+    document.getElementById('total-score-display').textContent = totalScore;
+    
+    showScreen('game');
+}
+
 function gameLoop(timestamp) {
     if (!gameStartTime) gameStartTime = timestamp;
     const deltaTime = timestamp - lastTime;
@@ -215,8 +229,223 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// Остальные функции game.js остаются без изменений, но должны включать аналогичные проверки
-// на существование элементов и обработку неопределенных значений
+function update(deltaTime) {
+    // Update game state
+    updatePlayer(deltaTime);
+    updateGhosts(deltaTime);
+    checkCollisions();
+    checkWinCondition();
+}
+
+function updatePlayer(deltaTime) {
+    // Handle player movement
+    if (keys['ArrowUp'] || player.nextMove === 'up') {
+        player.dy = -characterSpeeds[selectedCharacter];
+        player.dx = 0;
+        player.nextMove = null;
+    } else if (keys['ArrowDown'] || player.nextMove === 'down') {
+        player.dy = characterSpeeds[selectedCharacter];
+        player.dx = 0;
+        player.nextMove = null;
+    } else if (keys['ArrowLeft'] || player.nextMove === 'left') {
+        player.dx = -characterSpeeds[selectedCharacter];
+        player.dy = 0;
+        player.nextMove = null;
+    } else if (keys['ArrowRight'] || player.nextMove === 'right') {
+        player.dx = characterSpeeds[selectedCharacter];
+        player.dy = 0;
+        player.nextMove = null;
+    }
+    
+    // Move player
+    const newX = player.x + player.dx * deltaTime / 1000;
+    const newY = player.y + player.dy * deltaTime / 1000;
+    
+    // Check wall collisions
+    if (!isWall(newX, newY)) {
+        player.x = newX;
+        player.y = newY;
+    } else {
+        player.dx = 0;
+        player.dy = 0;
+    }
+    
+    // Check teleports
+    checkTeleports();
+    
+    // Check power pellet timeout
+    if (player.poweredUp && Date.now() > player.powerEndTime) {
+        player.poweredUp = false;
+        document.getElementById('power-indicator').style.display = 'none';
+    }
+}
+
+function updateGhosts(deltaTime) {
+    ghosts.forEach(ghost => {
+        // Simple AI for ghosts
+        if (Math.random() < 0.01) {
+            ghost.dx = Math.random() > 0.5 ? 1 : -1;
+            ghost.dy = Math.random() > 0.5 ? 1 : -1;
+        }
+        
+        // Move ghost
+        const newX = ghost.x + ghost.dx * ghost.speed * deltaTime / 1000;
+        const newY = ghost.y + ghost.dy * ghost.speed * deltaTime / 1000;
+        
+        if (!isWall(newX, newY)) {
+            ghost.x = newX;
+            ghost.y = newY;
+        } else {
+            ghost.dx = Math.random() > 0.5 ? 1 : -1;
+            ghost.dy = Math.random() > 0.5 ? 1 : -1;
+        }
+    });
+}
+
+function checkCollisions() {
+    // Check coin collisions
+    for (let i = coins.length - 1; i >= 0; i--) {
+        const coin = coins[i];
+        if (Math.abs(player.x - coin.x) < 0.5 && Math.abs(player.y - coin.y) < 0.5) {
+            if (coin.type === 'power') {
+                score += POWER_PELLET_SCORE;
+                player.poweredUp = true;
+                player.powerEndTime = Date.now() + 10000; // 10 seconds
+                document.getElementById('power-indicator').style.display = 'block';
+                playSound('power-pellet');
+            } else {
+                score += COIN_SCORE;
+                playSound('coin');
+            }
+            coins.splice(i, 1);
+            document.getElementById('score-display').textContent = score;
+        }
+    }
+    
+    // Check ghost collisions
+    ghosts.forEach(ghost => {
+        if (Math.abs(player.x - ghost.x) < 0.5 && Math.abs(player.y - ghost.y) < 0.5) {
+            if (player.poweredUp) {
+                // Eat ghost
+                score += 200;
+                playSound('eat-ghost');
+                // Respawn ghost
+                const spawn = LEVELS[currentLevel - 1].ghostSpawns[ghosts.indexOf(ghost) % LEVELS[currentLevel - 1].ghostSpawns.length];
+                ghost.x = spawn.x;
+                ghost.y = spawn.y;
+                document.getElementById('score-display').textContent = score;
+            } else {
+                // Lose life
+                lives--;
+                document.getElementById('lives-display').textContent = lives;
+                playSound('lose-life');
+                if (lives <= 0) {
+                    gameOver();
+                } else {
+                    // Reset player position
+                    player.x = LEVELS[currentLevel - 1].playerSpawn.x;
+                    player.y = LEVELS[currentLevel - 1].playerSpawn.y;
+                }
+            }
+        }
+    });
+}
+
+function checkTeleports() {
+    teleports.forEach(teleport => {
+        if (Math.abs(player.x - teleport.entry.x) < 0.5 && Math.abs(player.y - teleport.entry.y) < 0.5) {
+            player.x = teleport.exit.x;
+            player.y = teleport.exit.y;
+            playSound('teleport');
+        }
+    });
+}
+
+function checkWinCondition() {
+    if (coins.length === 0) {
+        // Level completed
+        totalScore += score * currentLevel * LEVEL_SCORE_MULTIPLIER;
+        gameData.gameState.levelScores[currentLevel - 1] = score;
+        gameData.gameState.levelCompletion[currentLevel - 1] = true;
+        
+        if (currentLevel < LEVELS.length) {
+            gameData.gameState.unlockedLevels[currentLevel] = true;
+        }
+        
+        saveGameData();
+        playSound('win');
+        
+        if (currentLevel < LEVELS.length) {
+            currentLevel++;
+            startGame();
+        } else {
+            // Game completed
+            gameRunning = false;
+            showScreen('main-menu');
+            showNotification('Congratulations! You completed all levels!');
+        }
+    }
+}
+
+function gameOver() {
+    gameRunning = false;
+    playSound('gameover');
+    showScreen('main-menu');
+    showNotification('Game Over! Try again?');
+    savePlayerData();
+}
+
+function drawGame() {
+    // Draw background
+    if (images.gameBg.complete) {
+        ctx.drawImage(images.gameBg, 0, 0, canvas.width, canvas.height);
+    }
+    
+    // Draw walls
+    for (let y = 0; y < walls.length; y++) {
+        for (let x = 0; x < walls[y].length; x++) {
+            if (walls[y][x] !== 0 && images.walls[walls[y][x]]?.complete) {
+                const tileSize = canvas.width / GRID_SIZE;
+                ctx.drawImage(images.walls[walls[y][x]], x * tileSize, y * tileSize, tileSize, tileSize);
+            }
+        }
+    }
+    
+    // Draw coins
+    coins.forEach(coin => {
+        const tileSize = canvas.width / GRID_SIZE;
+        const img = coin.type === 'power' ? images.powerPellet : images.coin;
+        if (img.complete) {
+            ctx.drawImage(img, coin.x * tileSize, coin.y * tileSize, tileSize, tileSize);
+        }
+    });
+    
+    // Draw ghosts
+    ghosts.forEach(ghost => {
+        const tileSize = canvas.width / GRID_SIZE;
+        if (images.ghosts[ghost.type]?.complete) {
+            ctx.drawImage(images.ghosts[ghost.type], ghost.x * tileSize, ghost.y * tileSize, tileSize, tileSize);
+        }
+    });
+    
+    // Draw player
+    const tileSize = canvas.width / GRID_SIZE;
+    if (images.characters[selectedCharacter]?.complete) {
+        ctx.drawImage(images.characters[selectedCharacter], player.x * tileSize, player.y * tileSize, tileSize, tileSize);
+    }
+}
+
+function isWall(x, y) {
+    const gridX = Math.floor(x);
+    const gridY = Math.floor(y);
+    
+    return gridY >= 0 && gridY < walls.length && 
+           gridX >= 0 && gridX < walls[gridY].length && 
+           walls[gridY][gridX] !== 0;
+}
 
 window.addEventListener('load', initGame);
 window.startGame = startGame;
+window.showScreen = showScreen;
+window.showNotification = showNotification;
+window.savePlayerData = savePlayerData;
