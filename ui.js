@@ -218,15 +218,16 @@ function updateLevelSelectionUI() {
                 levelBtn.classList.add('completed');
                 levelBtn.innerHTML = `<span>${i+1}</span><span class="level-score">★ ${gameData.gameState.levelScores[i] || 0}</span>`;
             
-            if (i+1 === gameData.gameState.currentLevel) {
-                levelBtn.classList.add('current');
+                if (i+1 === gameData.gameState.currentLevel) {
+                    levelBtn.classList.add('current');
+                }
+                
+                levelBtn.addEventListener('click', () => {
+                    gameData.gameState.currentLevel = i+1;
+                    saveGameData();
+                    startGame();
+                });
             }
-            
-            levelBtn.addEventListener('click', () => {
-                gameData.gameState.currentLevel = i+1;
-                saveGameData();
-                startGame();
-            });
         } else {
             levelBtn.textContent = i+1;
             levelBtn.classList.add('locked');
