@@ -171,15 +171,29 @@ function handleSwipe() {
 
 // Проверка на существование gameData
 function resetGameState() {
+function resetGameState() {
     if (!window.gameData) {
-        console.error('gameData is not initialized');
-        return;
+        window.gameData = {
+            users: [],
+            settings: {
+                musicEnabled: true,
+                soundEnabled: true,
+                musicVolume: 0.7,
+                soundVolume: 0.7
+            },
+            gameState: {
+                currentLevel: 1,
+                unlockedLevels: Array(50).fill(false).map((_, i) => i < 5),
+                levelScores: Array(50).fill(0),
+                levelCompletion: Array(50).fill(false)
+            }
+        };
     }
-    
+
     currentLevel = gameData.gameState.currentLevel;
     lives = characterLives[selectedCharacter];
     score = 0;
-
+}
 
 // Generate level based on current level
 function generateLevel() {
