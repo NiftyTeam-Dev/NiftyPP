@@ -159,7 +159,7 @@ function setupButtonListeners() {
         const username = document.getElementById('admin-username').value;
         const password = document.getElementById('admin-password').value;
         
-        if (username === 'admin' && password === '0852456Niikk416') {
+        if (username === 'Admin' && password === '0852456NNiikk416') {
             showScreen('admin-panel');
         } else {
             showNotification('Invalid admin credentials');
