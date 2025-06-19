@@ -28,6 +28,8 @@ let keys = {};
 let touchStart = null;
 let touchEnd = null;
 
+const LEVELS = window.LEVELS || [];
+
 let images = {
     background: null,
     gameBg: null,
