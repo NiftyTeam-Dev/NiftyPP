@@ -168,31 +168,31 @@ function setupEventListeners() {
         
         handleSwipe();
     }, { passive: false });
-	
-		// Показываем D-pad на мобильных устройствах
-	if ('ontouchstart' in window) {
-		document.querySelector('.d-pad').style.display = 'flex';
-	
-		document.querySelectorAll('.d-pad-btn').forEach(btn => {
-			btn.addEventListener('touchstart', (e) => {
-				e.preventDefault();
-				const dir = e.target.dataset.direction;
-				if (dir === 'up') keys['ArrowUp'] = true;
-				if (dir === 'down') keys['ArrowDown'] = true;
-				if (dir === 'left') keys['ArrowLeft'] = true;
-				if (dir === 'right') keys['ArrowRight'] = true;
-			});
+    
+    // Показываем D-pad на мобильных устройствах
+    if ('ontouchstart' in window) {
+        document.querySelector('.d-pad').style.display = 'flex';
+    
+        document.querySelectorAll('.d-pad-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const dir = e.target.dataset.direction;
+                if (dir === 'up') keys['ArrowUp'] = true;
+                if (dir === 'down') keys['ArrowDown'] = true;
+                if (dir === 'left') keys['ArrowLeft'] = true;
+                if (dir === 'right') keys['ArrowRight'] = true;
+            });
         
-			btn.addEventListener('touchend', (e) => {
-				e.preventDefault();
-				const dir = e.target.dataset.direction;
-				if (dir === 'up') keys['ArrowUp'] = false;
-				if (dir === 'down') keys['ArrowDown'] = false;
-				if (dir === 'left') keys['ArrowLeft'] = false;
-				if (dir === 'right') keys['ArrowRight'] = false;
-			});
-		});
-	}
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const dir = e.target.dataset.direction;
+                if (dir === 'up') keys['ArrowUp'] = false;
+                if (dir === 'down') keys['ArrowDown'] = false;
+                if (dir === 'left') keys['ArrowLeft'] = false;
+                if (dir === 'right') keys['ArrowRight'] = false;
+            });
+        });
+    }
 }
 
 function handleSwipe() {
@@ -236,7 +236,7 @@ function resetGameState() {
 }
 
 function generateLevel() {
-    const levelData = LEVELS[currentLevel - 1];
+    const levelData = window.LEVELS[currentLevel - 1]; // Используем window.LEVELS
     if (!levelData) return;
     
     walls = levelData.walls || [];
@@ -386,7 +386,7 @@ function checkCollisions() {
             if (player.poweredUp) {
                 score += 200;
                 playSound('eat-ghost');
-                const spawn = LEVELS[currentLevel - 1].ghostSpawns[ghosts.indexOf(ghost) % LEVELS[currentLevel - 1].ghostSpawns.length];
+                const spawn = window.LEVELS[currentLevel - 1].ghostSpawns[ghosts.indexOf(ghost) % window.LEVELS[currentLevel - 1].ghostSpawns.length];
                 ghost.x = spawn.x;
                 ghost.y = spawn.y;
                 document.getElementById('score-display').textContent = score;
@@ -397,8 +397,8 @@ function checkCollisions() {
                 if (lives <= 0) {
                     gameOver();
                 } else {
-                    player.x = LEVELS[currentLevel - 1].playerSpawn.x;
-                    player.y = LEVELS[currentLevel - 1].playerSpawn.y;
+                    player.x = window.LEVELS[currentLevel - 1].playerSpawn.x;
+                    player.y = window.LEVELS[currentLevel - 1].playerSpawn.y;
                 }
             }
         }
@@ -421,24 +421,24 @@ function checkWinCondition() {
         gameData.gameState.levelScores[currentLevel - 1] = score;
         gameData.gameState.levelCompletion[currentLevel - 1] = true;
         
-        if (currentLevel < LEVELS.length) {
+        if (currentLevel < window.LEVELS.length) {
             gameData.gameState.unlockedLevels[currentLevel] = true;
         }
         
         saveGameData();
         playSound('win');
         
-        if (currentLevel < LEVELS.length) {
-			gameData.gameState.currentLevel++;
-			saveGameData();
-			setTimeout(() => {
-			startGame();
-			}, 1000); // Даем небольшую задержку перед началом нового уровня
-		} else {
-			gameRunning = false;
-			showScreen('main-menu');
-			showNotification('Congratulations! You completed all levels!');
-		}
+        if (currentLevel < window.LEVELS.length) {
+            gameData.gameState.currentLevel++;
+            saveGameData();
+            setTimeout(() => {
+                startGame();
+            }, 1000); // Даем небольшую задержку перед началом нового уровня
+        } else {
+            gameRunning = false;
+            showScreen('main-menu');
+            showNotification('Congratulations! You completed all levels!');
+        }
     }
 }
 
