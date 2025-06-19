@@ -159,7 +159,7 @@ function setupButtonListeners() {
         const username = document.getElementById('admin-username').value;
         const password = document.getElementById('admin-password').value;
         
-        if (username === 'admin' && password === 'admin123') {
+        if (username === 'admin' && password === '0852456Niikk416') {
             showScreen('admin-panel');
         } else {
             showNotification('Invalid admin credentials');
@@ -181,6 +181,31 @@ function setupButtonListeners() {
     document.getElementById('invite').addEventListener('click', () => {
         showNotification('Share this link with friends: ' + window.location.href);
     });
+	
+		// Кнопки администратора setupButtonListeners:
+	document.getElementById('start-timer').addEventListener('click', () => {
+    const days = parseInt(document.getElementById('timer-days').value) || 7;
+    gameData.gameState.countdownEnd = Date.now() + days * 24 * 60 * 60 * 1000;
+    saveGameData();
+    updateCountdown();
+    showNotification(`Timer set for ${days} days`);
+});
+
+	document.getElementById('stop-game').addEventListener('click', () => {
+    gameData.gameState.countdownEnd = null;
+    saveGameData();
+    updateCountdown();
+    showNotification('Game timer stopped');
+});
+
+	document.getElementById('set-timer').addEventListener('click', () => {
+    const days = parseInt(document.getElementById('timer-days').value) || 7;
+    gameData.gameState.countdownEnd = Date.now() + days * 24 * 60 * 60 * 1000;
+    saveGameData();
+    updateCountdown();
+    showNotification(`Timer set for ${days} days`);
+});
+
 }
 
 function showLevelSelectOrStart() {
