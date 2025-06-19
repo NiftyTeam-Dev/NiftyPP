@@ -40,32 +40,34 @@ class LevelGenerator {
         ];
     }
 
-    isReachable(startX, startY, targetX, targetY, walls) {
-        const visited = new Set();
-        const queue = [[startX, startY]];
+isReachable(startX, startY, targetX, targetY, walls) {
+    const visited = new Set();
+    const queue = [[startX, startY]];
+
+    while (queue.length > 0) {
+        const cell = queue.shift();
+        const x = cell[0];
+        const y = cell[1];
+        const key = `${x},${y}`;
     
-        while (queue.length > 0) {
-            const [x, y] = queue.shift();
-            const key = `${x},${y}`;
+        if (visited.has(key)) continue;
+        visited.add(key);
+    
+        if (x === targetX && y === targetY) return true;
+    
+        const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+        for (const [dx, dy] of directions) {
+            const nx = x + dx;
+            const ny = y + dy;
         
-            if (visited.has(key)) continue;
-            visited.add(key);
-        
-            if (x === targetX && y === targetY) return true;
-        
-            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-            for (const [dx, dy] of directions) {
-                const nx = x + dx;
-                const ny = y + dy;
-            
-                if (!this.isWall(nx, ny, walls) && !visited.has(`${nx},${ny}`)) {
-                    queue.push([nx, ny]);
-                }
+            if (!this.isWall(nx, ny, walls) && !visited.has(`${nx},${ny}`)) {
+                queue.push([nx, ny]);
             }
         }
-    
-        return false;
     }
+
+    return false;
+}
 
     generateLevel(levelNumber) {
         const level = {
@@ -215,3 +217,4 @@ class LevelGenerator {
 
 const levelGenerator = new LevelGenerator();
 const LEVELS = Array.from({ length: 50 }, (_, i) => levelGenerator.generateLevel(i + 1));
+window.LEVELS = LEVELS;
