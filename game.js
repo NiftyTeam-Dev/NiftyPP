@@ -168,6 +168,31 @@ function setupEventListeners() {
         
         handleSwipe();
     }, { passive: false });
+	
+		// Показываем D-pad на мобильных устройствах
+	if ('ontouchstart' in window) {
+		document.querySelector('.d-pad').style.display = 'flex';
+	
+		document.querySelectorAll('.d-pad-btn').forEach(btn => {
+			btn.addEventListener('touchstart', (e) => {
+				e.preventDefault();
+				const dir = e.target.dataset.direction;
+				if (dir === 'up') keys['ArrowUp'] = true;
+				if (dir === 'down') keys['ArrowDown'] = true;
+				if (dir === 'left') keys['ArrowLeft'] = true;
+				if (dir === 'right') keys['ArrowRight'] = true;
+			});
+        
+			btn.addEventListener('touchend', (e) => {
+				e.preventDefault();
+				const dir = e.target.dataset.direction;
+				if (dir === 'up') keys['ArrowUp'] = false;
+				if (dir === 'down') keys['ArrowDown'] = false;
+				if (dir === 'left') keys['ArrowLeft'] = false;
+				if (dir === 'right') keys['ArrowRight'] = false;
+			});
+		});
+	}
 }
 
 function handleSwipe() {
@@ -281,22 +306,21 @@ function update(deltaTime) {
 }
 
 function updatePlayer(deltaTime) {
-    if (keys['ArrowUp'] || player.nextMove === 'up') {
+    if ((keys['ArrowUp'] || player.nextMove === 'up') && !keys['ArrowDown']) {
         player.dy = -characterSpeeds[selectedCharacter];
         player.dx = 0;
-        player.nextMove = null;
-    } else if (keys['ArrowDown'] || player.nextMove === 'down') {
+    } else if ((keys['ArrowDown'] || player.nextMove === 'down') && !keys['ArrowUp']) {
         player.dy = characterSpeeds[selectedCharacter];
         player.dx = 0;
-        player.nextMove = null;
-    } else if (keys['ArrowLeft'] || player.nextMove === 'left') {
+    } else if ((keys['ArrowLeft'] || player.nextMove === 'left') && !keys['ArrowRight']) {
         player.dx = -characterSpeeds[selectedCharacter];
         player.dy = 0;
-        player.nextMove = null;
-    } else if (keys['ArrowRight'] || player.nextMove === 'right') {
+    } else if ((keys['ArrowRight'] || player.nextMove === 'right') && !keys['ArrowLeft']) {
         player.dx = characterSpeeds[selectedCharacter];
         player.dy = 0;
-        player.nextMove = null;
+    } else {
+        player.dx = 0;
+        player.dy = 0;
     }
     
     const newX = player.x + player.dx * deltaTime / 1000;
@@ -405,13 +429,16 @@ function checkWinCondition() {
         playSound('win');
         
         if (currentLevel < LEVELS.length) {
-            currentLevel++;
-            startGame();
-        } else {
-            gameRunning = false;
-            showScreen('main-menu');
-            showNotification('Congratulations! You completed all levels!');
-        }
+			gameData.gameState.currentLevel++;
+			saveGameData();
+			setTimeout(() => {
+			startGame();
+			}, 1000); // Даем небольшую задержку перед началом нового уровня
+		} else {
+			gameRunning = false;
+			showScreen('main-menu');
+			showNotification('Congratulations! You completed all levels!');
+		}
     }
 }
 
