@@ -40,6 +40,33 @@ class LevelGenerator {
         ];
     }
 
+    isReachable(startX, startY, targetX, targetY, walls) {
+        const visited = new Set();
+        const queue = [[startX, startY]];
+    
+        while (queue.length > 0) {
+            const [x, y] = queue.shift();
+            const key = `${x},${y}`;
+        
+            if (visited.has(key)) continue;
+            visited.add(key);
+        
+            if (x === targetX && y === targetY) return true;
+        
+            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+            for (const [dx, dy] of directions) {
+                const nx = x + dx;
+                const ny = y + dy;
+            
+                if (!this.isWall(nx, ny, walls) && !visited.has(`${nx},${ny}`)) {
+                    queue.push([nx, ny]);
+                }
+            }
+        }
+    
+        return false;
+    }
+
     generateLevel(levelNumber) {
         const level = {
             walls: [],
@@ -59,44 +86,15 @@ class LevelGenerator {
             for (let x = 0; x < GRID_SIZE; x++) {
                 if (!this.isWall(x, y, level.walls) && 
                     (x !== level.playerSpawn.x || y !== level.playerSpawn.y)) {
-                    if (!this.isWall(x, y, level.walls) && 
-						this.isReachable(x, y, level.playerSpawn.x, level.playerSpawn.y, level.walls)) {
-						if (Math.random() < 0.7 - (levelNumber * 0.005)) {
-							level.coins.push({ x, y, type: 'normal' });
+                    if (this.isReachable(x, y, level.playerSpawn.x, level.playerSpawn.y, level.walls)) {
+                        if (Math.random() < 0.7 - (levelNumber * 0.005)) {
+                            level.coins.push({ x, y, type: 'normal' });
         
-							if (Math.random() < 0.05 - (levelNumber * 0.0005)) {
-							level.coins[level.coins.length - 1].type = 'power';
-							}
-						}
-					}
-
-		// И добавьте метод isReachable в класс LevelGenerator:
-		isReachable(startX, startY, targetX, targetY, walls) {
-		const visited = new Set();
-		const queue = [[startX, startY]];
-    
-			while (queue.length > 0) {
-			const [x, y] = queue.shift();
-			const key = `${x},${y}`;
-        
-			if (visited.has(key)) continue;
-			visited.add(key);
-        
-			if (x === targetX && y === targetY) return true;
-        
-			const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-			for (const [dx, dy] of directions) {
-				const nx = x + dx;
-				const ny = y + dy;
-            
-				if (!this.isWall(nx, ny, walls) && !visited.has(`${nx},${ny}`)) {
-                queue.push([nx, ny]);
-				}
-			}
-		}
-    
-    return false;
-}
+                            if (Math.random() < 0.05 - (levelNumber * 0.0005)) {
+                                level.coins[level.coins.length - 1].type = 'power';
+                            }
+                        }
+                    }
                 }
             }
         }
