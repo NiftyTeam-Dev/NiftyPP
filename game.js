@@ -306,6 +306,10 @@ function update(deltaTime) {
 }
 
 function updatePlayer(deltaTime) {
+    // Сохраняем предыдущую позицию
+    const prevX = player.x;
+    const prevY = player.y;
+
     if ((keys['ArrowUp'] || player.nextMove === 'up') && !keys['ArrowDown']) {
         player.dy = -characterSpeeds[selectedCharacter];
         player.dx = 0;
@@ -322,18 +326,19 @@ function updatePlayer(deltaTime) {
         player.dx = 0;
         player.dy = 0;
     }
-    
-    const newX = player.x + player.dx * deltaTime / 1000;
-    const newY = player.y + player.dy * deltaTime / 1000;
-    
-    if (!isWall(newX, newY)) {
-        player.x = newX;
-        player.y = newY;
-    } else {
-        player.dx = 0;
-        player.dy = 0;
+
+    // Пробуем двигаться по X
+    player.x += player.dx * deltaTime / 1000;
+    if (isWall(player.x, player.y)) {
+        player.x = prevX;
     }
-    
+
+    // Пробуем двигаться по Y
+    player.y += player.dy * deltaTime / 1000;
+    if (isWall(player.x, player.y)) {
+        player.y = prevY;
+    }
+
     checkTeleports();
     
     if (player.poweredUp && Date.now() > player.powerEndTime) {
@@ -491,12 +496,22 @@ function drawGame() {
 }
 
 function isWall(x, y) {
-    const gridX = Math.floor(x);
-    const gridY = Math.floor(y);
-    
-    return gridY >= 0 && gridY < walls.length && 
-           gridX >= 0 && gridX < walls[gridY].length && 
-           walls[gridY][gridX] !== 0;
+    // Проверяем все четыре угла спрайта
+    const checkPoints = [
+        [x, y],                 // верхний левый
+        [x + 0.9, y],           // верхний правый
+        [x, y + 0.9],           // нижний левый
+        [x + 0.9, y + 0.9]      // нижний правый
+    ];
+
+    return checkPoints.some(point => {
+        const gridX = Math.floor(point[0]);
+        const gridY = Math.floor(point[1]);
+        
+        return gridY >= 0 && gridY < walls.length && 
+               gridX >= 0 && gridX < walls[gridY].length && 
+               walls[gridY][gridX] !== 0;
+    });
 }
 
 window.addEventListener('load', initGame);
