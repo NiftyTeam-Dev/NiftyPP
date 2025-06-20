@@ -330,62 +330,58 @@ function update(deltaTime) {
 function updatePlayer(deltaTime) {
     const prevX = player.x;
     const prevY = player.y;
-    const speed = characterSpeeds[selectedCharacter] * deltaTime / 1000;
 
-    // Управление
+    // Управление через player.nextMove (сенсорное)
     if (player.nextMove) {
         switch (player.nextMove) {
             case 'up':
-                if (!isWall(player.x, player.y - 0.1)) player.dy = -speed;
                 player.dx = 0;
+                player.dy = -characterSpeeds[selectedCharacter];
                 break;
             case 'down':
-                if (!isWall(player.x, player.y + 0.1)) player.dy = speed;
                 player.dx = 0;
+                player.dy = characterSpeeds[selectedCharacter];
                 break;
             case 'left':
-                if (!isWall(player.x - 0.1, player.y)) player.dx = -speed;
+                player.dx = -characterSpeeds[selectedCharacter];
                 player.dy = 0;
                 break;
             case 'right':
-                if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
+                player.dx = characterSpeeds[selectedCharacter];
                 player.dy = 0;
                 break;
         }
-    } else if (keys['ArrowUp']) {
-        if (!isWall(player.x, player.y - 0.1)) player.dy = -speed;
+    }
+    // Управление через клавиатуру (оставлено для совместимости)
+    else if (keys['ArrowUp']) {
         player.dx = 0;
+        player.dy = -characterSpeeds[selectedCharacter];
     } else if (keys['ArrowDown']) {
-        if (!isWall(player.x, player.y + 0.1)) player.dy = speed;
         player.dx = 0;
+        player.dy = characterSpeeds[selectedCharacter];
     } else if (keys['ArrowLeft']) {
-        if (!isWall(player.x - 0.1, player.y)) player.dx = -speed;
+        player.dx = -characterSpeeds[selectedCharacter];
         player.dy = 0;
     } else if (keys['ArrowRight']) {
-        if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
+        player.dx = characterSpeeds[selectedCharacter];
+        player.dy = 0;
+    } else {
+        player.dx = 0;
         player.dy = 0;
     }
 
     // Движение по X
-    player.x += player.dx;
+    player.x += player.dx * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.x = prevX;
         player.dx = 0;
     }
 
     // Движение по Y
-    player.y += player.dy;
+    player.y += player.dy * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.y = prevY;
         player.dy = 0;
-    }
-
-    // Притягивание к центру клетки при движении вдоль стен
-    if (player.dx !== 0 && Math.abs(player.y - Math.round(player.y)) > 0.1) {
-        player.y += (Math.round(player.y) - player.y) * 0.2;
-    }
-    if (player.dy !== 0 && Math.abs(player.x - Math.round(player.x)) > 0.1) {
-        player.x += (Math.round(player.x) - player.x) * 0.2;
     }
 
     checkTeleports();
@@ -548,11 +544,11 @@ function drawGame() {
 function isWall(x, y) {
     // Проверяем все четыре угла спрайта
     const checkPoints = [
-        [x + 0.2, y + 0.2],       // верхний левый (с отступом)
-        [x + 0.8, y + 0.2],       // верхний правый
-        [x + 0.2, y + 0.8],       // нижний левый
-        [x + 0.8, y + 0.8],       // нижний правый
-        [x + 0.5, y + 0.5]        // центр
+        [x, y],                 // верхний левый
+        [x + 0.9, y],           // верхний правый
+        [x, y + 0.9],           // нижний левый
+        [x + 0.9, y + 0.9]      // нижний правый
+    ];
 
     return checkPoints.some(point => {
         const gridX = Math.floor(point[0]);
