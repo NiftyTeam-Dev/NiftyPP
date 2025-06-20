@@ -404,7 +404,6 @@ function updatePlayer(deltaTime) {
         player.y = Math.round(player.y);
     }
 }
-}
 
 function updateGhosts(deltaTime) {
     ghosts.forEach(ghost => {
