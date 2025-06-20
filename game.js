@@ -25,9 +25,8 @@ let player = {
 let lastTime = 0;
 let gameStartTime = 0;
 let keys = {};
-let touchId = null;
-let touchStartX = 0;
-let touchStartY = 0;
+let touchStart = null;
+let touchEnd = null;
 
 let images = {
     background: null,
@@ -52,6 +51,7 @@ function initGame() {
     setupEventListeners();
     resetGameState();
     
+    // Загружаем изображения перед началом игры
     loadImages().then(() => {
         requestAnimationFrame(gameLoop);
     }).catch(error => {
@@ -69,11 +69,13 @@ function resizeCanvas() {
 function loadImages() {
     return new Promise((resolve, reject) => {
         let loadedCount = 0;
-        const totalImages = 11;
+        const totalImages = 11; // Общее количество изображений
         
         function imageLoaded() {
             loadedCount++;
-            if (loadedCount === totalImages) resolve();
+            if (loadedCount === totalImages) {
+                resolve();
+            }
         }
         
         function handleImageError(error) {
@@ -81,16 +83,19 @@ function loadImages() {
             reject(error);
         }
         
+        // Фон меню
         images.background = new Image();
         images.background.onload = imageLoaded;
         images.background.onerror = handleImageError;
         images.background.src = 'images/menu-bg.png';
         
+        // Фон игры
         images.gameBg = new Image();
         images.gameBg.onload = imageLoaded;
         images.gameBg.onerror = handleImageError;
         images.gameBg.src = 'images/game-bg.png';
         
+        // Персонажи
         for (let i = 0; i < 3; i++) {
             images.characters[i] = new Image();
             images.characters[i].onload = imageLoaded;
@@ -103,6 +108,7 @@ function loadImages() {
             images.ghosts[i].src = `images/ghosts/ghost${i+1}.png`;
         }
         
+        // Предметы
         images.coin = new Image();
         images.coin.onload = imageLoaded;
         images.coin.onerror = handleImageError;
@@ -113,6 +119,7 @@ function loadImages() {
         images.powerPellet.onerror = handleImageError;
         images.powerPellet.src = 'images/items/power-pellet.png';
         
+        // Стены
         images.walls[WALL_TYPES.SOLID] = new Image();
         images.walls[WALL_TYPES.SOLID].onload = imageLoaded;
         images.walls[WALL_TYPES.SOLID].onerror = handleImageError;
@@ -131,7 +138,6 @@ function loadImages() {
 }
 
 function setupEventListeners() {
-    // Keyboard controls
     window.addEventListener('keydown', (e) => {
         keys[e.key] = true;
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -143,98 +149,60 @@ function setupEventListeners() {
         keys[e.key] = false;
     });
     
-    // Touch controls
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchStart = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        };
+    }, { passive: false });
     
-    // D-pad controls for mobile
-    if ('ontouchstart' in window) {
-        const dPad = document.querySelector('.d-pad');
-        if (dPad) {
-            dPad.style.display = 'grid';
-            
-            document.querySelectorAll('.d-pad-btn').forEach(btn => {
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    const dir = e.target.dataset.direction;
-                    setDirectionFromDPad(dir);
-                });
-                
-                btn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    resetDPad();
-                });
-                
-                btn.addEventListener('touchcancel', (e) => {
-                    e.preventDefault();
-                    resetDPad();
-                });
-            });
-        }
-    }
-}
-
-function handleTouchStart(e) {
-    e.preventDefault();
-    if (e.touches.length === 1) {
-        touchId = e.touches[0].identifier;
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }
-}
-
-function handleTouchMove(e) {
-    e.preventDefault();
-    if (!touchId) return;
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (!touchStart) return;
+        
+        touchEnd = {
+            x: e.changedTouches[0].clientX,
+            y: e.changedTouches[0].clientY
+        };
+        
+        handleSwipe();
+    }, { passive: false });
     
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        if (touch.identifier === touchId) {
-            const dx = touch.clientX - touchStartX;
-            const dy = touch.clientY - touchStartY;
-            const absDx = Math.abs(dx);
-            const absDy = Math.abs(dy);
-            
-            if (absDx > 10 || absDy > 10) {
-                if (absDx > absDy) {
-                    player.nextMove = dx > 0 ? 'right' : 'left';
-                } else {
-                    player.nextMove = dy > 0 ? 'down' : 'up';
-                }
-            }
-            break;
-        }
-    }
-}
+    // Показываем D-pad на мобильных устройствах
+if ('ontouchstart' in window) {
+    const dPad = document.querySelector('.d-pad');
+    if (dPad) dPad.style.display = 'flex';
 
-function handleTouchEnd(e) {
-    e.preventDefault();
-    if (!touchId) return;
+    document.querySelectorAll('.d-pad-btn').forEach(btn => {
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const dir = e.target.dataset.direction;
+            keys['ArrowUp'] = dir === 'up';
+            keys['ArrowDown'] = dir === 'down';
+            keys['ArrowLeft'] = dir === 'left';
+            keys['ArrowRight'] = dir === 'right';
+        });
     
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        if (touch.identifier === touchId) {
-            player.nextMove = null;
-            touchId = null;
-            break;
-        }
-    }
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            resetKeys();
+        });
+        
+        btn.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            resetKeys();
+        });
+    });
 }
-
-function setDirectionFromDPad(direction) {
-    resetKeys();
-    switch (direction) {
-        case 'up': keys['ArrowUp'] = true; break;
-        case 'down': keys['ArrowDown'] = true; break;
-        case 'left': keys['ArrowLeft'] = true; break;
-        case 'right': keys['ArrowRight'] = true; break;
-    }
-}
-
-function resetDPad() {
-    resetKeys();
+    
+    // Добавляем обработчик touchcancel для всего canvas
+    canvas.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        resetKeys();
+        touchStart = null;
+        touchEnd = null;
+    });
 }
 
 function resetKeys() {
@@ -243,6 +211,30 @@ function resetKeys() {
     keys['ArrowLeft'] = false;
     keys['ArrowRight'] = false;
     player.nextMove = null;
+}
+
+function handleSwipe() {
+    if (!touchStart || !touchEnd || !player) return;
+    
+    const dx = touchEnd.x - touchStart.x;
+    const dy = touchEnd.y - touchStart.y;
+    
+    // Минимальная дистанция для распознавания свайпа
+    const minDistance = 30;
+    if (Math.abs(dx) < minDistance && Math.abs(dy) < minDistance) {
+        touchStart = null;
+        touchEnd = null;
+        return;
+    }
+    
+    if (Math.abs(dx) > Math.abs(dy)) {
+        player.nextMove = dx > 0 ? 'right' : 'left';
+    } else {
+        player.nextMove = dy > 0 ? 'down' : 'up';
+    }
+    
+    touchStart = null;
+    touchEnd = null;
 }
 
 function resetGameState() {
@@ -270,7 +262,7 @@ function resetGameState() {
 }
 
 function generateLevel() {
-    const levelData = window.LEVELS[currentLevel - 1];
+    const levelData = window.LEVELS[currentLevel - 1]; // Используем window.LEVELS
     if (!levelData) return;
     
     walls = levelData.walls || [];
@@ -302,6 +294,7 @@ function generateLevel() {
 }
 
 function startGame() {
+    document.getElementById('game-ui').classList.add('active');
     gameRunning = true;
     resetGameState();
     generateLevel();
@@ -340,52 +333,37 @@ function update(deltaTime) {
 }
 
 function updatePlayer(deltaTime) {
+    // Сохраняем предыдущую позицию
     const prevX = player.x;
     const prevY = player.y;
 
-    // Determine direction from keyboard, D-pad or swipe
-    let direction = null;
-    if (keys['ArrowUp']) direction = 'up';
-    else if (keys['ArrowDown']) direction = 'down';
-    else if (keys['ArrowLeft']) direction = 'left';
-    else if (keys['ArrowRight']) direction = 'right';
-    else if (player.nextMove) direction = player.nextMove;
-
-    // Apply movement
-    switch (direction) {
-        case 'up':
-            player.dy = -characterSpeeds[selectedCharacter];
-            player.dx = 0;
-            break;
-        case 'down':
-            player.dy = characterSpeeds[selectedCharacter];
-            player.dx = 0;
-            break;
-        case 'left':
-            player.dx = -characterSpeeds[selectedCharacter];
-            player.dy = 0;
-            break;
-        case 'right':
-            player.dx = characterSpeeds[selectedCharacter];
-            player.dy = 0;
-            break;
-        default:
-            player.dx = 0;
-            player.dy = 0;
+    if ((keys['ArrowUp'] || player.nextMove === 'up') && !keys['ArrowDown']) {
+        player.dy = -characterSpeeds[selectedCharacter];
+        player.dx = 0;
+    } else if ((keys['ArrowDown'] || player.nextMove === 'down') && !keys['ArrowUp']) {
+        player.dy = characterSpeeds[selectedCharacter];
+        player.dx = 0;
+    } else if ((keys['ArrowLeft'] || player.nextMove === 'left') && !keys['ArrowRight']) {
+        player.dx = -characterSpeeds[selectedCharacter];
+        player.dy = 0;
+    } else if ((keys['ArrowRight'] || player.nextMove === 'right') && !keys['ArrowLeft']) {
+        player.dx = characterSpeeds[selectedCharacter];
+        player.dy = 0;
+    } else {
+        player.dx = 0;
+        player.dy = 0;
     }
 
-    // Try X movement
+    // Пробуем двигаться по X
     player.x += player.dx * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.x = prevX;
-        playSound('wall-bump');
     }
 
-    // Try Y movement
+    // Пробуем двигаться по Y
     player.y += player.dy * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.y = prevY;
-        playSound('wall-bump');
     }
 
     checkTeleports();
@@ -487,7 +465,7 @@ function checkWinCondition() {
             saveGameData();
             setTimeout(() => {
                 startGame();
-            }, 1000);
+            }, 1000); // Даем небольшую задержку перед началом нового уровня
         } else {
             gameRunning = false;
             showScreen('main-menu');
@@ -497,6 +475,7 @@ function checkWinCondition() {
 }
 
 function gameOver() {
+    document.getElementById('game-ui').classList.remove('active');
     gameRunning = false;
     playSound('gameover');
     showScreen('main-menu');
@@ -505,10 +484,12 @@ function gameOver() {
 }
 
 function drawGame() {
+    // Рисуем только если изображения загружены
     if (images.gameBg && images.gameBg.complete) {
         ctx.drawImage(images.gameBg, 0, 0, canvas.width, canvas.height);
     }
     
+    // Рисуем стены
     for (let y = 0; y < walls.length; y++) {
         for (let x = 0; x < walls[y].length; x++) {
             if (walls[y][x] !== 0 && images.walls[walls[y][x]] && images.walls[walls[y][x]].complete) {
@@ -518,6 +499,7 @@ function drawGame() {
         }
     }
     
+    // Рисуем монеты
     coins.forEach(coin => {
         const tileSize = canvas.width / GRID_SIZE;
         const img = coin.type === 'power' ? images.powerPellet : images.coin;
@@ -526,6 +508,7 @@ function drawGame() {
         }
     });
     
+    // Рисуем призраков
     ghosts.forEach(ghost => {
         const tileSize = canvas.width / GRID_SIZE;
         if (images.ghosts[ghost.type] && images.ghosts[ghost.type].complete) {
@@ -533,6 +516,7 @@ function drawGame() {
         }
     });
     
+    // Рисуем игрока
     const tileSize = canvas.width / GRID_SIZE;
     if (images.characters[selectedCharacter] && images.characters[selectedCharacter].complete) {
         ctx.drawImage(images.characters[selectedCharacter], player.x * tileSize, player.y * tileSize, tileSize, tileSize);
@@ -540,11 +524,12 @@ function drawGame() {
 }
 
 function isWall(x, y) {
+    // Проверяем все четыре угла спрайта
     const checkPoints = [
-        [x, y],
-        [x + 0.9, y],
-        [x, y + 0.9],
-        [x + 0.9, y + 0.9]
+        [x, y],                 // верхний левый
+        [x + 0.9, y],           // верхний правый
+        [x, y + 0.9],           // нижний левый
+        [x + 0.9, y + 0.9]      // нижний правый
     ];
 
     return checkPoints.some(point => {
