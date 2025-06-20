@@ -365,7 +365,6 @@ function updatePlayer(deltaTime) {
         if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
         player.dy = 0;
     }
-}	
 
     // Движение по X
     player.x += player.dx;
@@ -395,8 +394,8 @@ function updatePlayer(deltaTime) {
         player.poweredUp = false;
         document.getElementById('power-indicator').style.display = 'none';
     }
-	
-	    // Прилипание к центру клетки при приближении
+    
+    // Прилипание к центру клетки при приближении
     const snapThreshold = 0.1;
     if (Math.abs(player.x - Math.round(player.x)) < snapThreshold) {
         player.x = Math.round(player.x);
