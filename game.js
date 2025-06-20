@@ -51,7 +51,6 @@ function initGame() {
     setupEventListeners();
     resetGameState();
     
-    // Загружаем изображения перед началом игры
     loadImages().then(() => {
         requestAnimationFrame(gameLoop);
     }).catch(error => {
@@ -69,7 +68,7 @@ function resizeCanvas() {
 function loadImages() {
     return new Promise((resolve, reject) => {
         let loadedCount = 0;
-        const totalImages = 11; // Общее количество изображений
+        const totalImages = 11;
         
         function imageLoaded() {
             loadedCount++;
@@ -83,19 +82,16 @@ function loadImages() {
             reject(error);
         }
         
-        // Фон меню
         images.background = new Image();
         images.background.onload = imageLoaded;
         images.background.onerror = handleImageError;
         images.background.src = 'images/menu-bg.png';
         
-        // Фон игры
         images.gameBg = new Image();
         images.gameBg.onload = imageLoaded;
         images.gameBg.onerror = handleImageError;
         images.gameBg.src = 'images/game-bg.png';
         
-        // Персонажи
         for (let i = 0; i < 3; i++) {
             images.characters[i] = new Image();
             images.characters[i].onload = imageLoaded;
@@ -108,7 +104,6 @@ function loadImages() {
             images.ghosts[i].src = `images/ghosts/ghost${i+1}.png`;
         }
         
-        // Предметы
         images.coin = new Image();
         images.coin.onload = imageLoaded;
         images.coin.onerror = handleImageError;
@@ -119,7 +114,6 @@ function loadImages() {
         images.powerPellet.onerror = handleImageError;
         images.powerPellet.src = 'images/items/power-pellet.png';
         
-        // Стены
         images.walls[WALL_TYPES.SOLID] = new Image();
         images.walls[WALL_TYPES.SOLID].onload = imageLoaded;
         images.walls[WALL_TYPES.SOLID].onerror = handleImageError;
@@ -159,12 +153,14 @@ function setupEventListeners() {
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const dir = e.target.dataset.direction;
-                player.nextMove = dir; // Запоминаем направление
+                player.nextMove = dir;
             });
 
             btn.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                player.nextMove = null; // Сбрасываем направление
+                if (player.nextMove === e.target.dataset.direction) {
+                    player.nextMove = null;
+                }
             });
         });
     }
@@ -174,62 +170,58 @@ function setupEventListeners() {
         e.preventDefault();
         const touch = e.touches[0];
         touchStart = { x: touch.clientX, y: touch.clientY };
+        touchEnd = null;
     }, { passive: false });
 
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if (!touchStart) return;
-
         const touch = e.touches[0];
-        const dx = touch.clientX - touchStart.x;
-        const dy = touch.clientY - touchStart.y;
-
-        // Определяем направление свайпа
-        if (Math.abs(dx) > Math.abs(dy)) {
-            player.nextMove = dx > 0 ? 'right' : 'left';
-        } else {
-            player.nextMove = dy > 0 ? 'down' : 'up';
-        }
+        touchEnd = { x: touch.clientX, y: touch.clientY };
     }, { passive: false });
 
     canvas.addEventListener('touchend', (e) => {
         e.preventDefault();
-        player.nextMove = null; // Сбрасываем направление
+        if (touchStart && touchEnd) {
+            handleSwipe();
+        }
         touchStart = null;
+        touchEnd = null;
     }, { passive: false });
 }
 
 function handleSwipe() {
-    if (!touchStart || !touchEnd || !player) return;
+    if (!touchStart || !touchEnd) return;
     
     const dx = touchEnd.x - touchStart.x;
     const dy = touchEnd.y - touchStart.y;
     
-    // Минимальная дистанция для распознавания свайпа
     const minDistance = 30;
     if (Math.abs(dx) < minDistance && Math.abs(dy) < minDistance) {
-        touchStart = null;
-        touchEnd = null;
-        resetKeys(); // Сбрасываем управление при маленьком движении
+        resetKeys();
         return;
     }
     
     if (Math.abs(dx) > Math.abs(dy)) {
-        player.nextMove = dx > 0 ? 'right' : 'left';
+        keys['ArrowLeft'] = false;
+        keys['ArrowRight'] = false;
+        keys[dx > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
     } else {
-        player.nextMove = dy > 0 ? 'down' : 'up';
+        keys['ArrowUp'] = false;
+        keys['ArrowDown'] = false;
+        keys[dy > 0 ? 'ArrowDown' : 'ArrowUp'] = true;
     }
     
-    // Устанавливаем таймер для автоматического сброса движения через 200мс
     if (this.swipeTimeout) clearTimeout(this.swipeTimeout);
-    this.swipeTimeout = setTimeout(() => {
-        resetKeys();
-        touchStart = null;
-        touchEnd = null;
-    }, 200);
-    
-    touchStart = null;
-    touchEnd = null;
+    this.swipeTimeout = setTimeout(resetKeys, 200);
+}
+
+function resetKeys() {
+    keys['ArrowUp'] = false;
+    keys['ArrowDown'] = false;
+    keys['ArrowLeft'] = false;
+    keys['ArrowRight'] = false;
+    player.nextMove = null;
 }
 
 function resetGameState() {
@@ -257,7 +249,7 @@ function resetGameState() {
 }
 
 function generateLevel() {
-    const levelData = window.LEVELS[currentLevel - 1]; // Используем window.LEVELS
+    const levelData = window.LEVELS[currentLevel - 1];
     if (!levelData) return;
     
     walls = levelData.walls || [];
@@ -335,35 +327,31 @@ function updatePlayer(deltaTime) {
     // Управление
     if (player.nextMove) {
         switch (player.nextMove) {
-            case 'up':
-                if (!isWall(player.x, player.y - 0.1)) player.dy = -speed;
+            case 'up': 
+                player.dy = -speed; 
                 player.dx = 0;
                 break;
-            case 'down':
-                if (!isWall(player.x, player.y + 0.1)) player.dy = speed;
+            case 'down': 
+                player.dy = speed; 
                 player.dx = 0;
                 break;
-            case 'left':
-                if (!isWall(player.x - 0.1, player.y)) player.dx = -speed;
+            case 'left': 
+                player.dx = -speed; 
                 player.dy = 0;
                 break;
-            case 'right':
-                if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
+            case 'right': 
+                player.dx = speed; 
                 player.dy = 0;
                 break;
         }
-    } else if (keys['ArrowUp']) {
-        if (!isWall(player.x, player.y - 0.1)) player.dy = -speed;
+    } else {
         player.dx = 0;
-    } else if (keys['ArrowDown']) {
-        if (!isWall(player.x, player.y + 0.1)) player.dy = speed;
-        player.dx = 0;
-    } else if (keys['ArrowLeft']) {
-        if (!isWall(player.x - 0.1, player.y)) player.dx = -speed;
         player.dy = 0;
-    } else if (keys['ArrowRight']) {
-        if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
-        player.dy = 0;
+        
+        if (keys['ArrowUp']) player.dy = -speed;
+        if (keys['ArrowDown']) player.dy = speed;
+        if (keys['ArrowLeft']) player.dx = -speed;
+        if (keys['ArrowRight']) player.dx = speed;
     }
 
     // Движение по X
@@ -380,7 +368,7 @@ function updatePlayer(deltaTime) {
         player.dy = 0;
     }
 
-    // Притягивание к центру клетки при движении вдоль стен
+    // Притягивание к центру клетки
     if (player.dx !== 0 && Math.abs(player.y - Math.round(player.y)) > 0.1) {
         player.y += (Math.round(player.y) - player.y) * 0.2;
     }
@@ -395,7 +383,7 @@ function updatePlayer(deltaTime) {
         document.getElementById('power-indicator').style.display = 'none';
     }
     
-    // Прилипание к центру клетки при приближении
+    // Прилипание к центру клетки
     const snapThreshold = 0.1;
     if (Math.abs(player.x - Math.round(player.x)) < snapThreshold) {
         player.x = Math.round(player.x);
@@ -496,7 +484,7 @@ function checkWinCondition() {
             saveGameData();
             setTimeout(() => {
                 startGame();
-            }, 1000); // Даем небольшую задержку перед началом нового уровня
+            }, 1000);
         } else {
             gameRunning = false;
             showScreen('main-menu');
@@ -515,12 +503,10 @@ function gameOver() {
 }
 
 function drawGame() {
-    // Рисуем только если изображения загружены
     if (images.gameBg && images.gameBg.complete) {
         ctx.drawImage(images.gameBg, 0, 0, canvas.width, canvas.height);
     }
     
-    // Рисуем стены
     for (let y = 0; y < walls.length; y++) {
         for (let x = 0; x < walls[y].length; x++) {
             if (walls[y][x] !== 0 && images.walls[walls[y][x]] && images.walls[walls[y][x]].complete) {
@@ -530,7 +516,6 @@ function drawGame() {
         }
     }
     
-    // Рисуем монеты
     coins.forEach(coin => {
         const tileSize = canvas.width / GRID_SIZE;
         const img = coin.type === 'power' ? images.powerPellet : images.coin;
@@ -539,7 +524,6 @@ function drawGame() {
         }
     });
     
-    // Рисуем призраков
     ghosts.forEach(ghost => {
         const tileSize = canvas.width / GRID_SIZE;
         if (images.ghosts[ghost.type] && images.ghosts[ghost.type].complete) {
@@ -547,7 +531,6 @@ function drawGame() {
         }
     });
     
-    // Рисуем игрока
     const tileSize = canvas.width / GRID_SIZE;
     if (images.characters[selectedCharacter] && images.characters[selectedCharacter].complete) {
         ctx.drawImage(images.characters[selectedCharacter], player.x * tileSize, player.y * tileSize, tileSize, tileSize);
@@ -555,13 +538,12 @@ function drawGame() {
 }
 
 function isWall(x, y) {
-    // Проверяем все четыре угла спрайта плюс центр
     const checkPoints = [
-        [x + 0.2, y + 0.2],       // верхний левый (с отступом)
-        [x + 0.8, y + 0.2],       // верхний правый
-        [x + 0.2, y + 0.8],       // нижний левый
-        [x + 0.8, y + 0.8],       // нижний правый
-        [x + 0.5, y + 0.5]        // центр
+        [x + 0.2, y + 0.2],
+        [x + 0.8, y + 0.2],
+        [x + 0.2, y + 0.8],
+        [x + 0.8, y + 0.8],
+        [x + 0.5, y + 0.5]
     ];
 
     return checkPoints.some(point => {
