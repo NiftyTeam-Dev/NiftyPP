@@ -394,6 +394,15 @@ function updatePlayer(deltaTime) {
         player.poweredUp = false;
         document.getElementById('power-indicator').style.display = 'none';
     }
+
+	    // Прилипание к центру клетки при приближении
+    const snapThreshold = 0.1;
+    if (Math.abs(player.x - Math.round(player.x)) < snapThreshold) {
+        player.x = Math.round(player.x);
+    }
+    if (Math.abs(player.y - Math.round(player.y)) < snapThreshold) {
+        player.y = Math.round(player.y);
+    }
 }
 
 function updateGhosts(deltaTime) {
@@ -562,6 +571,7 @@ function isWall(x, y) {
                gridX >= 0 && gridX < walls[gridY].length && 
                walls[gridY][gridX] !== 0;
     });
+	
 }
 
 window.addEventListener('load', initGame);
