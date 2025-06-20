@@ -171,50 +171,30 @@ function setupEventListeners() {
     
     // Показываем D-pad на мобильных устройствах
     if ('ontouchstart' in window) {
-    const dPad = document.querySelector('.d-pad');
-    if (dPad) dPad.style.display = 'flex';
-
-    document.querySelectorAll('.d-pad-btn').forEach(btn => {
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const dir = e.target.dataset.direction;
-            if (dir === 'up') {
-                keys['ArrowUp'] = true;
-                keys['ArrowDown'] = false;
-                keys['ArrowLeft'] = false;
-                keys['ArrowRight'] = false;
-            } 
-            if (dir === 'down') {
-                keys['ArrowUp'] = false;
-                keys['ArrowDown'] = true;
-                keys['ArrowLeft'] = false;
-                keys['ArrowRight'] = false;
-            }
-            if (dir === 'left') {
-                keys['ArrowUp'] = false;
-                keys['ArrowDown'] = false;
-                keys['ArrowLeft'] = true;
-                keys['ArrowRight'] = false;
-            }
-            if (dir === 'right') {
-                keys['ArrowUp'] = false;
-                keys['ArrowDown'] = false;
-                keys['ArrowLeft'] = false;
-                keys['ArrowRight'] = true;
-            }
-        });
+        const dPad = document.querySelector('.d-pad');
+        if (dPad) dPad.style.display = 'flex';
     
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            resetKeys();
-        });
+        document.querySelectorAll('.d-pad-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const dir = e.target.dataset.direction;
+                if (dir === 'up') keys['ArrowUp'] = true;
+                if (dir === 'down') keys['ArrowDown'] = true;
+                if (dir === 'left') keys['ArrowLeft'] = true;
+                if (dir === 'right') keys['ArrowRight'] = true;
+            });
         
-        btn.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            resetKeys();
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                resetKeys();
+            });
+            
+            btn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                resetKeys();
+            });
         });
-    });
-}
+    }
     
     // Добавляем обработчик touchcancel для всего canvas
     canvas.addEventListener('touchcancel', (e) => {
@@ -352,24 +332,24 @@ function update(deltaTime) {
 }
 
 function updatePlayer(deltaTime) {
+    // Сохраняем предыдущую позицию
     const prevX = player.x;
     const prevY = player.y;
 
-    // Обработка движения
-    if (keys['ArrowUp'] || player.nextMove === 'up') {
+    if ((keys['ArrowUp'] || player.nextMove === 'up') && !keys['ArrowDown']) {
         player.dy = -characterSpeeds[selectedCharacter];
         player.dx = 0;
-    } 
-    if (keys['ArrowDown'] || player.nextMove === 'down') {
+    } else if ((keys['ArrowDown'] || player.nextMove === 'down') && !keys['ArrowUp']) {
         player.dy = characterSpeeds[selectedCharacter];
         player.dx = 0;
-    } 
-    if (keys['ArrowLeft'] || player.nextMove === 'left') {
+    } else if ((keys['ArrowLeft'] || player.nextMove === 'left') && !keys['ArrowRight']) {
         player.dx = -characterSpeeds[selectedCharacter];
         player.dy = 0;
-    } 
-    if (keys['ArrowRight'] || player.nextMove === 'right') {
+    } else if ((keys['ArrowRight'] || player.nextMove === 'right') && !keys['ArrowLeft']) {
         player.dx = characterSpeeds[selectedCharacter];
+        player.dy = 0;
+    } else {
+        player.dx = 0;
         player.dy = 0;
     }
 
@@ -377,14 +357,12 @@ function updatePlayer(deltaTime) {
     player.x += player.dx * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.x = prevX;
-        player.dx = 0;
     }
 
     // Пробуем двигаться по Y
     player.y += player.dy * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.y = prevY;
-        player.dy = 0;
     }
 
     checkTeleports();
