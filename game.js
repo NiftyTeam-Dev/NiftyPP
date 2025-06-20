@@ -394,7 +394,7 @@ function updatePlayer(deltaTime) {
         player.poweredUp = false;
         document.getElementById('power-indicator').style.display = 'none';
     }
-
+	
 	    // Прилипание к центру клетки при приближении
     const snapThreshold = 0.1;
     if (Math.abs(player.x - Math.round(player.x)) < snapThreshold) {
@@ -403,6 +403,7 @@ function updatePlayer(deltaTime) {
     if (Math.abs(player.y - Math.round(player.y)) < snapThreshold) {
         player.y = Math.round(player.y);
     }
+}
 }
 
 function updateGhosts(deltaTime) {
@@ -555,13 +556,14 @@ function drawGame() {
 }
 
 function isWall(x, y) {
-    // Проверяем все четыре угла спрайта
+    // Проверяем все четыре угла спрайта плюс центр
     const checkPoints = [
         [x + 0.2, y + 0.2],       // верхний левый (с отступом)
         [x + 0.8, y + 0.2],       // верхний правый
         [x + 0.2, y + 0.8],       // нижний левый
         [x + 0.8, y + 0.8],       // нижний правый
         [x + 0.5, y + 0.5]        // центр
+    ];
 
     return checkPoints.some(point => {
         const gridX = Math.floor(point[0]);
@@ -571,7 +573,6 @@ function isWall(x, y) {
                gridX >= 0 && gridX < walls[gridY].length && 
                walls[gridY][gridX] !== 0;
     });
-	
 }
 
 window.addEventListener('load', initGame);
