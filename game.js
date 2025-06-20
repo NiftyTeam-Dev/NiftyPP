@@ -171,7 +171,8 @@ function setupEventListeners() {
     
     // Показываем D-pad на мобильных устройствах
     if ('ontouchstart' in window) {
-        document.querySelector('.d-pad').style.display = 'flex';
+        const dPad = document.querySelector('.d-pad');
+        if (dPad) dPad.style.display = 'flex';
     
         document.querySelectorAll('.d-pad-btn').forEach(btn => {
             btn.addEventListener('touchstart', (e) => {
@@ -185,14 +186,31 @@ function setupEventListeners() {
         
             btn.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                const dir = e.target.dataset.direction;
-                if (dir === 'up') keys['ArrowUp'] = false;
-                if (dir === 'down') keys['ArrowDown'] = false;
-                if (dir === 'left') keys['ArrowLeft'] = false;
-                if (dir === 'right') keys['ArrowRight'] = false;
+                resetKeys();
+            });
+            
+            btn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                resetKeys();
             });
         });
     }
+    
+    // Добавляем обработчик touchcancel для всего canvas
+    canvas.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        resetKeys();
+        touchStart = null;
+        touchEnd = null;
+    });
+}
+
+function resetKeys() {
+    keys['ArrowUp'] = false;
+    keys['ArrowDown'] = false;
+    keys['ArrowLeft'] = false;
+    keys['ArrowRight'] = false;
+    player.nextMove = null;
 }
 
 function handleSwipe() {
@@ -200,6 +218,14 @@ function handleSwipe() {
     
     const dx = touchEnd.x - touchStart.x;
     const dy = touchEnd.y - touchStart.y;
+    
+    // Минимальная дистанция для распознавания свайпа
+    const minDistance = 30;
+    if (Math.abs(dx) < minDistance && Math.abs(dy) < minDistance) {
+        touchStart = null;
+        touchEnd = null;
+        return;
+    }
     
     if (Math.abs(dx) > Math.abs(dy)) {
         player.nextMove = dx > 0 ? 'right' : 'left';
