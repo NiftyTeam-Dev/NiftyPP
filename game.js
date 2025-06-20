@@ -365,6 +365,7 @@ function updatePlayer(deltaTime) {
         if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
         player.dy = 0;
     }
+}	
 
     // Движение по X
     player.x += player.dx;
