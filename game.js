@@ -562,6 +562,7 @@ function isWall(x, y) {
         [x + 0.2, y + 0.8],       // нижний левый
         [x + 0.8, y + 0.8],       // нижний правый
         [x + 0.5, y + 0.5]        // центр
+	];
 
     return checkPoints.some(point => {
         const gridX = Math.floor(point[0]);
