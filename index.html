@@ -332,76 +332,11 @@
     .d-pad {
         display: flex;
     }
-	
-	/* Мобильные стили */
-	@media (max-width: 768px) {
-    #game-canvas {
-        width: 100vw;
-        height: 100vw;
-        max-width: 100vh;
-        max-height: 100vh;
-    }
-    
-    .button {
-        padding: 15px 25px;
-        font-size: 18px;
-        min-width: 70vw;
-        margin: 8px 0;
-    }
-    
-    .game-ui {
-        font-size: 18px;
-        padding-bottom: 100px;
-    }
-    
-    .d-pad {
-        display: flex !important;
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-    }
-    
-    .d-pad-btn {
-        width: 60px !important;
-        height: 60px !important;
-        font-size: 24px;
-        background-color: rgba(255, 255, 0, 0.5);
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 5px;
-    }
-    
-    .back-button {
-        width: 80vw;
-        font-size: 18px;
-        padding: 12px;
-        bottom: 10px;
-    }
-    
-    .menu h1 {
-        font-size: 24px;
-        margin-bottom: 15px;
-    }
-    
-    .character img {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .level-button {
-        width: 40px;
-        height: 40px;
-        margin: 5px;
-        font-size: 16px;
-    }
 }
     </style>
 </head>
 <body>
-    <div id="game-contain er">
+    <div id="game-container">
         <canvas id="game-canvas"></canvas>
         <div id="ui-layer">
             <!-- Главное меню -->
@@ -595,22 +530,22 @@
             </div>
 
 			<!-- Добавьте в index.html перед закрывающим тегом </div> для game-container -->
-				<div class="d-pad" style="display: none;">
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-        <div style="grid-column: 2;">
-            <button class="d-pad-btn" data-direction="up" style="width: 70px; height: 70px; font-size: 28px;">↑</button>
-        </div>
-        <div style="grid-column: 1; grid-row: 2;">
-            <button class="d-pad-btn" data-direction="left" style="width: 70px; height: 70px; font-size: 28px;">←</button>
-        </div>
-        <div style="grid-column: 2; grid-row: 2;">
-            <button class="d-pad-btn" data-direction="down" style="width: 70px; height: 70px; font-size: 28px;">↓</button>
-        </div>
-        <div style="grid-column: 3; grid-row: 2;">
-            <button class="d-pad-btn" data-direction="right" style="width: 70px; height: 70px; font-size: 28px;">→</button>
-        </div>
-    </div>
-</div>
+				<div class="d-pad" style="position: absolute; bottom: 20px; left: 20px; display: none;">
+					<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+						<div style="grid-column: 2;">
+							<button class="d-pad-btn" data-direction="up" style="width: 50px; height: 50px;">↑</button>
+						</div>
+						<div style="grid-column: 1;">
+							<button class="d-pad-btn" data-direction="left" style="width: 50px; height: 50px;">←</button>
+						</div>
+						<div style="grid-column: 2;">
+							<button class="d-pad-btn" data-direction="down" style="width: 50px; height: 50px;">↓</button>
+						</div>
+						<div style="grid-column: 3;">
+							<button class="d-pad-btn" data-direction="right" style="width: 50px; height: 50px;">→</button>
+						</div>
+					</div>
+				</div>
         </div>
     </div>
 
