@@ -330,58 +330,62 @@ function update(deltaTime) {
 function updatePlayer(deltaTime) {
     const prevX = player.x;
     const prevY = player.y;
+    const speed = characterSpeeds[selectedCharacter] * deltaTime / 1000;
 
-    // Управление через player.nextMove (сенсорное)
+    // Управление
     if (player.nextMove) {
         switch (player.nextMove) {
             case 'up':
+                if (!isWall(player.x, player.y - 0.1)) player.dy = -speed;
                 player.dx = 0;
-                player.dy = -characterSpeeds[selectedCharacter];
                 break;
             case 'down':
+                if (!isWall(player.x, player.y + 0.1)) player.dy = speed;
                 player.dx = 0;
-                player.dy = characterSpeeds[selectedCharacter];
                 break;
             case 'left':
-                player.dx = -characterSpeeds[selectedCharacter];
+                if (!isWall(player.x - 0.1, player.y)) player.dx = -speed;
                 player.dy = 0;
                 break;
             case 'right':
-                player.dx = characterSpeeds[selectedCharacter];
+                if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
                 player.dy = 0;
                 break;
         }
-    }
-    // Управление через клавиатуру (оставлено для совместимости)
-    else if (keys['ArrowUp']) {
+    } else if (keys['ArrowUp']) {
+        if (!isWall(player.x, player.y - 0.1)) player.dy = -speed;
         player.dx = 0;
-        player.dy = -characterSpeeds[selectedCharacter];
     } else if (keys['ArrowDown']) {
+        if (!isWall(player.x, player.y + 0.1)) player.dy = speed;
         player.dx = 0;
-        player.dy = characterSpeeds[selectedCharacter];
     } else if (keys['ArrowLeft']) {
-        player.dx = -characterSpeeds[selectedCharacter];
+        if (!isWall(player.x - 0.1, player.y)) player.dx = -speed;
         player.dy = 0;
     } else if (keys['ArrowRight']) {
-        player.dx = characterSpeeds[selectedCharacter];
-        player.dy = 0;
-    } else {
-        player.dx = 0;
+        if (!isWall(player.x + 0.1, player.y)) player.dx = speed;
         player.dy = 0;
     }
 
     // Движение по X
-    player.x += player.dx * deltaTime / 1000;
+    player.x += player.dx;
     if (isWall(player.x, player.y)) {
         player.x = prevX;
         player.dx = 0;
     }
 
     // Движение по Y
-    player.y += player.dy * deltaTime / 1000;
+    player.y += player.dy;
     if (isWall(player.x, player.y)) {
         player.y = prevY;
         player.dy = 0;
+    }
+
+    // Притягивание к центру клетки при движении вдоль стен
+    if (player.dx !== 0 && Math.abs(player.y - Math.round(player.y)) > 0.1) {
+        player.y += (Math.round(player.y) - player.y) * 0.2;
+    }
+    if (player.dy !== 0 && Math.abs(player.x - Math.round(player.x)) > 0.1) {
+        player.x += (Math.round(player.x) - player.x) * 0.2;
     }
 
     checkTeleports();
@@ -389,6 +393,15 @@ function updatePlayer(deltaTime) {
     if (player.poweredUp && Date.now() > player.powerEndTime) {
         player.poweredUp = false;
         document.getElementById('power-indicator').style.display = 'none';
+    }
+
+	    // Прилипание к центру клетки при приближении
+    const snapThreshold = 0.1;
+    if (Math.abs(player.x - Math.round(player.x)) < snapThreshold) {
+        player.x = Math.round(player.x);
+    }
+    if (Math.abs(player.y - Math.round(player.y)) < snapThreshold) {
+        player.y = Math.round(player.y);
     }
 }
 
@@ -558,6 +571,7 @@ function isWall(x, y) {
                gridX >= 0 && gridX < walls[gridY].length && 
                walls[gridY][gridX] !== 0;
     });
+	
 }
 
 window.addEventListener('load', initGame);
