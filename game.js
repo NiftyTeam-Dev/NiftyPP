@@ -170,31 +170,34 @@ function setupEventListeners() {
     }, { passive: false });
     
     // Показываем D-pad на мобильных устройствах
-if ('ontouchstart' in window) {
-    const dPad = document.querySelector('.d-pad');
-    if (dPad) dPad.style.display = 'flex';
+    if ('ontouchstart' in window) {
+        const dPad = document.querySelector('.d-pad');
+        if (dPad) dPad.style.display = 'flex';
 
-    document.querySelectorAll('.d-pad-btn').forEach(btn => {
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const dir = e.target.dataset.direction;
-            keys['ArrowUp'] = dir === 'up';
-            keys['ArrowDown'] = dir === 'down';
-            keys['ArrowLeft'] = dir === 'left';
-            keys['ArrowRight'] = dir === 'right';
-        });
-    
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            resetKeys();
-        });
+        document.querySelectorAll('.d-pad-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const dir = e.target.dataset.direction;
+                keys['ArrowUp'] = dir === 'up';
+                keys['ArrowDown'] = dir === 'down';
+                keys['ArrowLeft'] = dir === 'left';
+                keys['ArrowRight'] = dir === 'right';
+                player.nextMove = dir;
+            });
         
-        btn.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            resetKeys();
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                resetKeys();
+                player.nextMove = null;
+            });
+            
+            btn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                resetKeys();
+                player.nextMove = null;
+            });
         });
-    });
-}
+    }
     
     // Добавляем обработчик touchcancel для всего canvas
     canvas.addEventListener('touchcancel', (e) => {
@@ -224,6 +227,7 @@ function handleSwipe() {
     if (Math.abs(dx) < minDistance && Math.abs(dy) < minDistance) {
         touchStart = null;
         touchEnd = null;
+        resetKeys(); // Сбрасываем управление при маленьком движении
         return;
     }
     
@@ -232,6 +236,14 @@ function handleSwipe() {
     } else {
         player.nextMove = dy > 0 ? 'down' : 'up';
     }
+    
+    // Устанавливаем таймер для автоматического сброса движения через 200мс
+    if (this.swipeTimeout) clearTimeout(this.swipeTimeout);
+    this.swipeTimeout = setTimeout(() => {
+        resetKeys();
+        touchStart = null;
+        touchEnd = null;
+    }, 200);
     
     touchStart = null;
     touchEnd = null;
@@ -337,6 +349,12 @@ function updatePlayer(deltaTime) {
     const prevX = player.x;
     const prevY = player.y;
 
+    // Сбрасываем движение, если нет активного ввода
+    if (!keys['ArrowUp'] && !keys['ArrowDown'] && !keys['ArrowLeft'] && !keys['ArrowRight'] && !player.nextMove) {
+        player.dx = 0;
+        player.dy = 0;
+    }
+
     if ((keys['ArrowUp'] || player.nextMove === 'up') && !keys['ArrowDown']) {
         player.dy = -characterSpeeds[selectedCharacter];
         player.dx = 0;
@@ -349,21 +367,28 @@ function updatePlayer(deltaTime) {
     } else if ((keys['ArrowRight'] || player.nextMove === 'right') && !keys['ArrowLeft']) {
         player.dx = characterSpeeds[selectedCharacter];
         player.dy = 0;
-    } else {
-        player.dx = 0;
-        player.dy = 0;
     }
 
     // Пробуем двигаться по X
     player.x += player.dx * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.x = prevX;
+        // Сбрасываем движение при столкновении
+        if (Math.abs(player.dx) > 0) {
+            player.dx = 0;
+            player.nextMove = null;
+        }
     }
 
     // Пробуем двигаться по Y
     player.y += player.dy * deltaTime / 1000;
     if (isWall(player.x, player.y)) {
         player.y = prevY;
+        // Сбрасываем движение при столкновении
+        if (Math.abs(player.dy) > 0) {
+            player.dy = 0;
+            player.nextMove = null;
+        }
     }
 
     checkTeleports();
